@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$SCRIPT_DIR/codex-agent-sandbox"
 source "$SCRIPT_DIR/scripts/load-omniroute-key.sh"
+RUNLOG_HOME_DEFAULT="${RUNLOG_HOME:-$HOME/runlog-registry}"
 
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 TIMEOUT_SEC="${CODEX_TIMEOUT_SEC:-240}"
@@ -55,7 +56,7 @@ fi
 cd "$APP_DIR"
 
 if [[ -n "${OMNIROUTE_API_KEY:-}" ]]; then
-  PYTHONPATH="$SCRIPT_DIR" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python evolve.py "$MODE" "$@"
+  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python evolve.py "$MODE" "$@"
 else
-  PYTHONPATH="$SCRIPT_DIR" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python evolve.py "$MODE" "$@"
+  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python evolve.py "$MODE" "$@"
 fi

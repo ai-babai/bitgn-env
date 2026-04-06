@@ -79,6 +79,7 @@ cd /Users/skif/develop/bitgn-env
 - For Codex-native MVP runner:
   - `CODEX_MODEL=gpt-5.3-codex ./run-codex-native.sh --env pac1 t01`
 - Task parallelism inside solve/evolution is supported via `--parallelism N` (alias: `--parallels N`).
+- Runlog home default in wrappers: `$HOME/runlog-registry` (override with `RUNLOG_HOME`).
 - Do not run multiple `full-step`/`autopilot` processes in parallel against one workspace because prompt/version artifacts are shared.
 
 ## Logging
@@ -95,7 +96,7 @@ cd /Users/skif/develop/bitgn-env
 
 ## Unified run registry (task-run as atomic unit)
 
-- Registry home (default): `/Users/skif/develop/runlog-registry`
+- Registry home (default): `$HOME/runlog-registry`
 - Main files:
   - `/Users/skif/develop/runlog-registry/index/runs.jsonl`
   - `/Users/skif/develop/runlog-registry/index/task_runs.jsonl`

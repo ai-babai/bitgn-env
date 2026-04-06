@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$SCRIPT_DIR/codex-agent-native"
 source "$SCRIPT_DIR/scripts/load-omniroute-key.sh"
+RUNLOG_HOME_DEFAULT="${RUNLOG_HOME:-$HOME/runlog-registry}"
 
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 TIMEOUT_SEC="${CODEX_TIMEOUT_SEC:-240}"
@@ -70,4 +71,4 @@ if [[ -n "$PARALLELISM" ]]; then
   RUN_ARGS+=("--parallelism" "$PARALLELISM")
 fi
 
-OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python runner.py "${RUN_ARGS[@]}"
+RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python runner.py "${RUN_ARGS[@]}"

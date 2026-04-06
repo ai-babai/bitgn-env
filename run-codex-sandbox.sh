@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$SCRIPT_DIR/codex-agent-sandbox"
 source "$SCRIPT_DIR/scripts/load-omniroute-key.sh"
+RUNLOG_HOME_DEFAULT="${RUNLOG_HOME:-$HOME/runlog-registry}"
 
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 BENCHMARK_ID="${BENCHMARK_ID:-bitgn/sandbox}"
@@ -63,4 +64,4 @@ if [[ $ALL -eq 0 && ${#TASKS[@]} -gt 0 ]]; then
   CMD+=("${TASKS[@]}")
 fi
 
-OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" BENCHMARK_ID="$BENCHMARK_ID" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" "${CMD[@]}"
+RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" BENCHMARK_ID="$BENCHMARK_ID" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" "${CMD[@]}"
