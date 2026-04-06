@@ -1,9 +1,11 @@
 import subprocess
 import os
+from pathlib import Path
 
 
 def run(args) -> None:
-    cmd = ["/Users/skif/develop/bitgn-env/run-codex-sandbox.sh"]
+    root = Path(__file__).resolve().parents[2]
+    cmd = [str(root / "run-codex-sandbox.sh")]
     env = getattr(args, "env", "sandbox")
     env_map = os.environ.copy()
     if env == "pac1":
