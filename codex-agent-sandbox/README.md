@@ -88,11 +88,13 @@ Artifacts:
 
 Environment:
 
-- `OPENAI_API_KEY` (required)
-- `OPENAI_BASE_URL` (defaults to OmniRoute endpoint if set by wrapper)
+- `OMNIROUTE_API_KEY` (required for Codex)
+- `BITGN_OMNIROUTE_KEY_FILE` (optional key file path if env is not set)
 - `CODEX_MODEL` (default: `gpt-5.3-codex`)
 - `BENCHMARK_HOST` (default: `https://api.bitgn.com`)
 - `BENCHMARK_ID` (default: `bitgn/sandbox`)
+
+Recommended key location per machine: `$HOME/.codex/omniroute-api-key` (`chmod 600`).
 
 Time display:
 - Run summaries and analyze reports include UTC plus MSK (`Europe/Moscow`) start/end timestamps.

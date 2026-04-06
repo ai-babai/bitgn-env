@@ -3,9 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$SCRIPT_DIR/codex-agent-analytics"
+source "$SCRIPT_DIR/scripts/load-omniroute-key.sh"
 
-KEY_FILE="${BITGN_OMNIROUTE_KEY_FILE:-/Users/skif/obsidian/skif-os/81-secrets-ai/homelab-omniroute/dev-key.md}"
-BASE_URL="${OPENAI_BASE_URL:-https://omni.mipopkov.com/v1}"
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 ENV_ID="sandbox"
 
@@ -50,19 +49,21 @@ else
   export AGENT_ENV="sandbox"
 fi
 
-if [[ -z "${OPENAI_API_KEY:-}" ]]; then
-  if [[ ! -f "$KEY_FILE" ]]; then
-    echo "ERROR: key file not found: $KEY_FILE" >&2
-    exit 1
-  fi
-  OPENAI_API_KEY="$(tr -d '\r\n' < "$KEY_FILE")"
+NEEDS_CODEX=1
+if [[ "$MODE" == "deploy" ]]; then
+  NEEDS_CODEX=0
 fi
 
-if [[ -z "$OPENAI_API_KEY" ]]; then
-  echo "ERROR: OPENAI_API_KEY is empty" >&2
-  exit 1
+if [[ $NEEDS_CODEX -eq 1 ]]; then
+  if ! bitgn_require_omniroute_key; then
+    exit 1
+  fi
 fi
 
 cd "$APP_DIR"
 
-OPENAI_API_KEY="$OPENAI_API_KEY" OPENAI_BASE_URL="$BASE_URL" CODEX_MODEL="$MODEL" uv run python cli.py "$MODE" "$@"
+if [[ $NEEDS_CODEX -eq 1 ]]; then
+  OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" uv run python cli.py "$MODE" "$@"
+else
+  CODEX_MODEL="$MODEL" uv run python cli.py "$MODE" "$@"
+fi

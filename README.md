@@ -64,16 +64,20 @@ cd /Users/skif/develop/bitgn-env
 
 ## Notes
 
-- By default scripts read API key from:
-  - `/Users/skif/obsidian/skif-os/81-secrets-ai/homelab-omniroute/dev-key.md`
-- You can override key path:
-  - `BITGN_OMNIROUTE_KEY_FILE=/path/to/key.md ./run-sandbox.sh`
+- For Codex agents, use only `OMNIROUTE_API_KEY`.
+- For Codex scripts (`run-codex-*.sh`) key resolution order is:
+  1. `OMNIROUTE_API_KEY` from environment
+  2. `BITGN_OMNIROUTE_KEY_FILE`
+  3. `$HOME/.codex/omniroute-api-key`
+- Recommended per-machine setup (local and server):
+  - store key at `$HOME/.codex/omniroute-api-key`
+  - `chmod 600 $HOME/.codex/omniroute-api-key`
 - You can override model/base URL via env:
   - `MODEL_ID=codex/gpt-5.3-codex-high OPENAI_BASE_URL=https://omni.mipopkov.com/v1 ./run-sandbox.sh`
 - For Codex-core runner:
-  - `CODEX_MODEL=gpt-5.3-codex OPENAI_BASE_URL=https://omni.mipopkov.com/v1 ./run-codex-sandbox.sh t01`
+  - `CODEX_MODEL=gpt-5.3-codex ./run-codex-sandbox.sh t01`
 - For Codex-native MVP runner:
-  - `CODEX_MODEL=gpt-5.3-codex OPENAI_BASE_URL=https://omni.mipopkov.com/v1 ./run-codex-native.sh --env pac1 t01`
+  - `CODEX_MODEL=gpt-5.3-codex ./run-codex-native.sh --env pac1 t01`
 - Task parallelism inside solve/evolution is supported via `--parallelism N` (alias: `--parallels N`).
 - Do not run multiple `full-step`/`autopilot` processes in parallel against one workspace because prompt/version artifacts are shared.
 

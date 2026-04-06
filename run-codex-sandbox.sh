@@ -3,9 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$SCRIPT_DIR/codex-agent-sandbox"
+source "$SCRIPT_DIR/scripts/load-omniroute-key.sh"
 
-KEY_FILE="${BITGN_OMNIROUTE_KEY_FILE:-/Users/skif/obsidian/skif-os/81-secrets-ai/homelab-omniroute/dev-key.md}"
-BASE_URL="${OPENAI_BASE_URL:-https://omni.mipopkov.com/v1}"
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 BENCHMARK_ID="${BENCHMARK_ID:-bitgn/sandbox}"
 TIMEOUT_SEC="${CODEX_TIMEOUT_SEC:-240}"
@@ -34,8 +33,7 @@ Examples:
 
 Optional env overrides:
   BITGN_OMNIROUTE_KEY_FILE
-  OPENAI_BASE_URL
-  OPENAI_API_KEY
+  OMNIROUTE_API_KEY
   CODEX_MODEL
   BENCHMARK_ID
   CODEX_TIMEOUT_SEC
@@ -49,16 +47,7 @@ EOF
   shift
 done
 
-if [[ -z "${OPENAI_API_KEY:-}" ]]; then
-  if [[ ! -f "$KEY_FILE" ]]; then
-    echo "ERROR: key file not found: $KEY_FILE" >&2
-    exit 1
-  fi
-  OPENAI_API_KEY="$(tr -d '\r\n' < "$KEY_FILE")"
-fi
-
-if [[ -z "$OPENAI_API_KEY" ]]; then
-  echo "ERROR: OPENAI_API_KEY is empty" >&2
+if ! bitgn_require_omniroute_key; then
   exit 1
 fi
 
@@ -74,4 +63,4 @@ if [[ $ALL -eq 0 && ${#TASKS[@]} -gt 0 ]]; then
   CMD+=("${TASKS[@]}")
 fi
 
-OPENAI_BASE_URL="$BASE_URL" OPENAI_API_KEY="$OPENAI_API_KEY" CODEX_MODEL="$MODEL" BENCHMARK_ID="$BENCHMARK_ID" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" "${CMD[@]}"
+OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" BENCHMARK_ID="$BENCHMARK_ID" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" "${CMD[@]}"

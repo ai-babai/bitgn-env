@@ -111,11 +111,13 @@ uv run python snapshot_task_context.py t03 --env pac1
 
 ## Важные env
 
-- `OPENAI_API_KEY` (обязателен)
-- `OPENAI_BASE_URL` (OmniRoute)
+- `OMNIROUTE_API_KEY` (обязателен для Codex)
+- `BITGN_OMNIROUTE_KEY_FILE` (опционально: путь к key file, если не задан env)
 - `CODEX_MODEL` (по умолчанию `gpt-5.3-codex`)
 - `BENCHMARK_HOST` (по умолчанию `https://api.bitgn.com`)
 - `BENCHMARK_ID` (`bitgn/sandbox` или `bitgn/pac1-dev`)
 - `AGENT_ENV` (`sandbox` или `pac1`)
 - `NATIVE_SESSION_TIMEOUT_SEC` (по умолчанию `420`)
 - `NATIVE_RUNS_DIR` (база для task workspaces)
+
+Рекомендация: хранить ключ в `$HOME/.codex/omniroute-api-key` с правами `600`.
