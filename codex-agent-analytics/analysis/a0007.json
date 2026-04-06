@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-04T21:07:18.528466+00:00",
+  "local_run_id": "local_run_20260404T210342Z_78099",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0008",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t13",
+    "affected_tasks": [
+      "t13"
+    ],
+    "problem": "Task t13 fails with fail_group=date_anchor. The agent called `context` and got `time=2026-01-08`, but then rescheduled by adding two weeks to the existing overdue field value (`2025-12-31 -> 2026-01-14`) instead of anchoring to runtime \"today\". Scorer evidence expects `next_follow_up_on=2026-01-22`, which is two weeks from the context date. This is a rules/prompting guidance miss on relative-date anchoring, not a runtime tool limitation.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t13",
+      "status": "fail",
+      "fail_group": "date_anchor",
+      "diagnosis": "The agent called `context` and got `time=2026-01-08`, but then rescheduled by adding two weeks to the existing overdue field value (`2025-12-31 -> 2026-01-14`) instead of anchoring to runtime \"today\". Scorer evidence expects `next_follow_up_on=2026-01-22`, which is two weeks from the context date. This is a rules/prompting guidance miss on relative-date anchoring, not a runtime tool limitation.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "PAC1 already provides `context.time`; the failure is in decision policy (which date to anchor on), so harness/rules guidance is sufficient.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Anchor Relative Reschedules to Runtime Context Date",
+        "hypothesis": "When instructions use relative timing (for example, \"in two weeks\"), agents can incorrectly anchor to stale record dates unless rules explicitly require using runtime context date as the default anchor.",
+        "change": "Add a concise scheduling rule: for relative-time requests, compute the new date from `context.time` (runtime \"today\") unless the instruction explicitly names another anchor date; do not anchor to existing overdue `due_on`/`next_follow_up_on` values by default. Keep existing rule to update both reminder and owning account when both carry the follow-up date.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0008/AGENTS.md",
+            "change_summary": "Add 3-5 bullets in scheduling/completion guidance defining relative-date anchor precedence (`context.time` first), explicit-anchor override, and consistency updates across reminder/account."
+          }
+        ],
+        "rollback": "Remove the added relative-date anchor bullets from the active rules AGENTS file.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is date-anchor policy based and reusable across CRM reschedule tasks without task-specific IDs or literal dates."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t13",
+        "problem": "Relative-time reschedule was anchored to an old stored follow-up date instead of runtime context date, producing `2026-01-14` instead of expected `2026-01-22`.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t13"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0008/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0008/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "ive timing (for example, \\\"in two weeks\\\"), agents can incorrectly anchor to stale record dates unless rules explicitly require using runtime context date as the default anchor.\",\n    \"change\": \"Add a concise scheduling rule: for relative-time requests, compute the new date from `context.time` (runtime \\\"today\\\") unless the instruction explicitly names another anchor date; do not anchor to existing overdue `due_on`/`next_follow_up_on` values by default. Keep existing rule to update both reminder and owning account when both carry the follow-up date.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0008/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 bullets in scheduling/completion guidance defining relative-date anchor precedence (`context.time` first), explicit-anchor override, and consistency updates across reminder/account.\"\n      }\n    ],\n    \"rollback\": \"Remove the added relative-date anchor bullets from the active rules AGENTS file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is date-anchor policy based and reusable across CRM reschedule tasks without task-specific IDs or literal dates.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t13\",\n    \"problem\": \"Relative-time reschedule was anchored to an old stored follow-up date instead of runtime context date, producing `2026-01-14` instead of expected `2026-01-22`.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t13\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0008/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0008/AGENTS.md\",\n      \"reason\": \"Path matches active rules version and is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": "ple, \\\"in two weeks\\\"), agents can incorrectly anchor to stale record dates unless rules explicitly require using runtime context date as the default anchor.\",\n    \"change\": \"Add a concise scheduling rule: for relative-time requests, compute the new date from `context.time` (runtime \\\"today\\\") unless the instruction explicitly names another anchor date; do not anchor to existing overdue `due_on`/`next_follow_up_on` values by default. Keep existing rule to update both reminder and owning account when both carry the follow-up date.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0008/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 bullets in scheduling/completion guidance defining relative-date anchor precedence (`context.time` first), explicit-anchor override, and consistency updates across reminder/account.\"\n      }\n    ],\n    \"rollback\": \"Remove the added relative-date anchor bullets from the active rules AGENTS file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is date-anchor policy based and reusable across CRM reschedule tasks without task-specific IDs or literal dates.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t13\",\n    \"problem\": \"Relative-time reschedule was anchored to an old stored follow-up date instead of runtime context date, producing `2026-01-14` instead of expected `2026-01-22`.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t13\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0008/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0008/AGENTS.md\",\n      \"reason\": \"Path matches active rules version and is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n188\u00a0087\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260404T210342Z_78099/t13/attempt_20260404T210343Z_652de9",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

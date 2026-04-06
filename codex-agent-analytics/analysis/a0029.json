@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-05T16:23:24.098058+00:00",
+  "local_run_id": "local_run_20260405T161316Z_2570309",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0030",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t23",
+    "affected_tasks": [
+      "t23"
+    ],
+    "problem": "Task t23 fails with fail_group=outcome_mismatch. The run returned `OUTCOME_NONE_CLARIFICATION` while scoring expected `OUTCOME_OK`. Evidence shows the agent stopped immediately on duplicate same-name contacts because active rules explicitly forbid tie-break disambiguation, even for routine inbox outreach where repository workflow/account signals can reduce to a single recipient.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t23",
+      "status": "fail",
+      "fail_group": "outcome_mismatch",
+      "diagnosis": "The run returned `OUTCOME_NONE_CLARIFICATION` while scoring expected `OUTCOME_OK`. Evidence shows the agent stopped immediately on duplicate same-name contacts because active rules explicitly forbid tie-break disambiguation, even for routine inbox outreach where repository workflow/account signals can reduce to a single recipient.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "This is a harness/rules decision-policy issue, not a runtime blocker. Required tools (read/search/write/report_completion) are available, and the miss came from local ambiguity policy choice.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Restore Deterministic Disambiguation Before Clarification for Name Collisions",
+        "hypothesis": "If duplicate-name recipient handling requires a deterministic repository-evidence disambiguation pass before clarification, the agent will avoid false `OUTCOME_NONE_CLARIFICATION` on resolvable inbox outreach tasks.",
+        "change": "Revise the duplicate-recipient bullets so clarification is a post-disambiguation fallback, not an immediate stop. Require a deterministic pass using message workflow cues plus contact->account linkage and account/notes metadata; proceed only when exactly one candidate remains, otherwise return `OUTCOME_NONE_CLARIFICATION`. Keep existing strict security gates for sensitive data-transfer/invoice flows unchanged.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0030/AGENTS.md",
+            "change_summary": "Replace the current 'no tie-break on multi-match name' wording with a short two-step rule: deterministic disambiguation first, clarification only if unresolved."
+          }
+        ],
+        "rollback": "Revert the edited duplicate-recipient bullets in `rules_versions/rv0030/AGENTS.md` to restore immediate clarification on any same-name multi-match.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is process-level and reusable across inbox outreach tasks with duplicate contact names, without task-specific literals."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t23",
+        "problem": "Current duplicate-name policy over-corrects to clarification and blocks deterministic recipient resolution for routine inbox outreach.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t23"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0030/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0030/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "back, not an immediate stop. Require a deterministic pass using message workflow cues plus contact->account linkage and account/notes metadata; proceed only when exactly one candidate remains, otherwise return `OUTCOME_NONE_CLARIFICATION`. Keep existing strict security gates for sensitive data-transfer/invoice flows unchanged.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0030/AGENTS.md\",\n        \"change_summary\": \"Replace the current 'no tie-break on multi-match name' wording with a short two-step rule: deterministic disambiguation first, clarification only if unresolved.\"\n      }\n    ],\n    \"rollback\": \"Revert the edited duplicate-recipient bullets in `rules_versions/rv0030/AGENTS.md` to restore immediate clarification on any same-name multi-match.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is process-level and reusable across inbox outreach tasks with duplicate contact names, without task-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t23\",\n    \"problem\": \"Current duplicate-name policy over-corrects to clarification and blocks deterministic recipient resolution for routine inbox outreach.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t23\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0030/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0030/AGENTS.md\",\n      \"reason\": \"Path matches the active rules target whitelist (`rules_versions/<active>/AGENTS.md`) and needs no normalization.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "te stop. Require a deterministic pass using message workflow cues plus contact->account linkage and account/notes metadata; proceed only when exactly one candidate remains, otherwise return `OUTCOME_NONE_CLARIFICATION`. Keep existing strict security gates for sensitive data-transfer/invoice flows unchanged.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0030/AGENTS.md\",\n        \"change_summary\": \"Replace the current 'no tie-break on multi-match name' wording with a short two-step rule: deterministic disambiguation first, clarification only if unresolved.\"\n      }\n    ],\n    \"rollback\": \"Revert the edited duplicate-recipient bullets in `rules_versions/rv0030/AGENTS.md` to restore immediate clarification on any same-name multi-match.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is process-level and reusable across inbox outreach tasks with duplicate contact names, without task-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t23\",\n    \"problem\": \"Current duplicate-name policy over-corrects to clarification and blocks deterministic recipient resolution for routine inbox outreach.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t23\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0030/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0030/AGENTS.md\",\n      \"reason\": \"Path matches the active rules target whitelist (`rules_versions/<active>/AGENTS.md`) and needs no normalization.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n520,332\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T161316Z_2570309/t23/attempt_20260405T161316Z_bf3b96",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-05T10:09:35.637980+00:00",
+  "local_run_id": "local_run_20260405T100531Z_2402126",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0017",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t21",
+    "affected_tasks": [
+      "t21"
+    ],
+    "problem": "Task t21 fails with fail_group=policy_conflict. The run read two mandatory completion-policy docs that required incompatible literals for the same output file, then proceeded with one branch and returned OUTCOME_OK. Scoring expected OUTCOME_NONE_CLARIFICATION, which indicates a missing ambiguity gate for conflicting policy directives. Evidence is in tool calls reading both docs and then writing `result.txt` without clarifying precedence.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t21",
+      "status": "fail",
+      "fail_group": "policy_conflict",
+      "diagnosis": "The run read two mandatory completion-policy docs that required incompatible literals for the same output file, then proceeded with one branch and returned OUTCOME_OK. Scoring expected OUTCOME_NONE_CLARIFICATION, which indicates a missing ambiguity gate for conflicting policy directives. Evidence is in tool calls reading both docs and then writing `result.txt` without clarifying precedence.",
+      "focus": {
+        "primary_task_id": "t21",
+        "problem": "Conflicting mandatory policy instructions were treated as executable instead of triggering clarification, causing an outcome mismatch (expected clarification, got success).",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t21"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "This is a decision-policy gap in harness guidance (conflict-resolution/clarification behavior), not a runtime tooling defect; a rules update is sufficient.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Add Mandatory Policy-Conflict Clarification Gate",
+        "hypothesis": "If mandatory instruction sources prescribe incompatible required outputs and no precedence rule resolves them, forcing clarification before mutation will prevent false OUTCOME_OK completions.",
+        "change": "Add a pre-mutation gate: when required policy files conflict on a must-do action or exact completion literal for the same artifact, do not choose arbitrarily and do not mutate; return `OUTCOME_NONE_CLARIFICATION` with a minimal precedence question. Proceed only when precedence is explicit in trusted instruction/policy.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0017/AGENTS.md",
+            "change_summary": "Add 3-5 concise bullets in completion/decision rules defining detection of conflicting mandatory directives, required clarification outcome, and no-mutation behavior until precedence is explicit."
+          }
+        ],
+        "rollback": "Remove the newly added policy-conflict clarification bullets from the active rules file.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule targets generic mandatory-directive conflicts across tasks and avoids task IDs or one-off expected values."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0017/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0017/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": " },\n  \"code_assessment\": {\n    \"classification\": \"optional\",\n    \"reason\": \"This is a decision-policy gap in harness guidance (conflict-resolution/clarification behavior), not a runtime tooling defect; a rules update is sufficient.\"\n  },\n  \"proposal_rules\": {\n    \"title\": \"Add Mandatory Policy-Conflict Clarification Gate\",\n    \"hypothesis\": \"If mandatory instruction sources prescribe incompatible required outputs and no precedence rule resolves them, forcing clarification before mutation will prevent false OUTCOME_OK completions.\",\n    \"change\": \"Add a pre-mutation gate: when required policy files conflict on a must-do action or exact completion literal for the same artifact, do not choose arbitrarily and do not mutate; return `OUTCOME_NONE_CLARIFICATION` with a minimal precedence question. Proceed only when precedence is explicit in trusted instruction/policy.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0017/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 concise bullets in completion/decision rules defining detection of conflicting mandatory directives, required clarification outcome, and no-mutation behavior until precedence is explicit.\"\n      }\n    ],\n    \"rollback\": \"Remove the newly added policy-conflict clarification bullets from the active rules file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule targets generic mandatory-directive conflicts across tasks and avoids task IDs or one-off expected values.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0017/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0017/AGENTS.md\",\n      \"reason\": \"Matches whitelist and current active rules target.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": "nt\": {\n    \"classification\": \"optional\",\n    \"reason\": \"This is a decision-policy gap in harness guidance (conflict-resolution/clarification behavior), not a runtime tooling defect; a rules update is sufficient.\"\n  },\n  \"proposal_rules\": {\n    \"title\": \"Add Mandatory Policy-Conflict Clarification Gate\",\n    \"hypothesis\": \"If mandatory instruction sources prescribe incompatible required outputs and no precedence rule resolves them, forcing clarification before mutation will prevent false OUTCOME_OK completions.\",\n    \"change\": \"Add a pre-mutation gate: when required policy files conflict on a must-do action or exact completion literal for the same artifact, do not choose arbitrarily and do not mutate; return `OUTCOME_NONE_CLARIFICATION` with a minimal precedence question. Proceed only when precedence is explicit in trusted instruction/policy.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0017/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 concise bullets in completion/decision rules defining detection of conflicting mandatory directives, required clarification outcome, and no-mutation behavior until precedence is explicit.\"\n      }\n    ],\n    \"rollback\": \"Remove the newly added policy-conflict clarification bullets from the active rules file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule targets generic mandatory-directive conflicts across tasks and avoids task IDs or one-off expected values.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0017/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0017/AGENTS.md\",\n      \"reason\": \"Matches whitelist and current active rules target.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n219,341\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T100531Z_2402126/t21/attempt_20260405T100532Z_bf1236",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

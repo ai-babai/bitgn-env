@@ -1,0 +1,9 @@
+name = "rules_deployer"
+description = "Deploy selected rules version to codex-agent-native local-rules."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Mode: deploy.
+You only copy approved rules AGENTS content from analytics rules_versions into native local-rules/AGENTS.md.
+Create backup before overwrite.
+Do not edit other files.
+"""

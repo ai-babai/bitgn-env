@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-05T14:36:06.828772+00:00",
+  "local_run_id": "local_run_20260405T142759Z_2511442",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0027",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t40",
+    "affected_tasks": [
+      "t40"
+    ],
+    "problem": "Task t40 fails with fail_group=ref_mismatch. The answer text was correct, but scoring failed because `grounding_refs` omitted the required canonical manager reference `contacts/mgr_001.json`. Tool traces show the run only searched/read `accounts/*` and then completed without reading/citing a `contacts/*` identity source for the person filter.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t40",
+      "status": "fail",
+      "fail_group": "ref_mismatch",
+      "diagnosis": "The answer text was correct, but scoring failed because `grounding_refs` omitted the required canonical manager reference `contacts/mgr_001.json`. Tool traces show the run only searched/read `accounts/*` and then completed without reading/citing a `contacts/*` identity source for the person filter.",
+      "focus": {
+        "primary_task_id": "t40",
+        "problem": "Entity-filtered queries can fail scoring when result rows are grounded but the canonical identity source used to resolve the entity/person filter is not cited.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t40"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "No runtime/tooling defect is demonstrated; the failure is completion-time grounding discipline and provenance coverage.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Canonical Identity + Row Evidence Gate",
+        "hypothesis": "Reference-mismatch failures recur when agents derive rows from downstream records but do not include the canonical identity record used to bind an entity/person filter.",
+        "change": "Add a pre-`report_completion` rule for entity/person-filtered answers: first resolve the filter using the canonical identity source (CRM: relevant `contacts/*.json` manager/contact file), then gather matching result rows (for example `accounts/*.json`). Require `grounding_refs` to include both (1) the canonical identity source and (2) the row-source files backing returned outputs.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0027/AGENTS.md",
+            "change_summary": "Add concise grounding/provenance bullets near completion rules that enforce canonical identity citation plus row-evidence citation for entity-filtered queries."
+          }
+        ],
+        "rollback": "Remove the added grounding/provenance gate bullets from `rules_versions/rv0027/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The proposal is workflow-level for entity resolution and avoids task IDs, exact expected outputs, and one-off literals."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0027/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0027/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "age.\",\n    \"rules_insufficient_evidence\": \"\"\n  },\n  \"proposal_rules\": {\n    \"title\": \"Canonical Identity + Row Evidence Gate\",\n    \"hypothesis\": \"Reference-mismatch failures recur when agents derive rows from downstream records but do not include the canonical identity record used to bind an entity/person filter.\",\n    \"change\": \"Add a pre-`report_completion` rule for entity/person-filtered answers: first resolve the filter using the canonical identity source (CRM: relevant `contacts/*.json` manager/contact file), then gather matching result rows (for example `accounts/*.json`). Require `grounding_refs` to include both (1) the canonical identity source and (2) the row-source files backing returned outputs.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0027/AGENTS.md\",\n        \"change_summary\": \"Add concise grounding/provenance bullets near completion rules that enforce canonical identity citation plus row-evidence citation for entity-filtered queries.\"\n      }\n    ],\n    \"rollback\": \"Remove the added grounding/provenance gate bullets from `rules_versions/rv0027/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is workflow-level for entity resolution and avoids task IDs, exact expected outputs, and one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0027/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0027/AGENTS.md\",\n      \"reason\": \"Path matches the rules whitelist and active rules version target.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "sufficient_evidence\": \"\"\n  },\n  \"proposal_rules\": {\n    \"title\": \"Canonical Identity + Row Evidence Gate\",\n    \"hypothesis\": \"Reference-mismatch failures recur when agents derive rows from downstream records but do not include the canonical identity record used to bind an entity/person filter.\",\n    \"change\": \"Add a pre-`report_completion` rule for entity/person-filtered answers: first resolve the filter using the canonical identity source (CRM: relevant `contacts/*.json` manager/contact file), then gather matching result rows (for example `accounts/*.json`). Require `grounding_refs` to include both (1) the canonical identity source and (2) the row-source files backing returned outputs.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0027/AGENTS.md\",\n        \"change_summary\": \"Add concise grounding/provenance bullets near completion rules that enforce canonical identity citation plus row-evidence citation for entity-filtered queries.\"\n      }\n    ],\n    \"rollback\": \"Remove the added grounding/provenance gate bullets from `rules_versions/rv0027/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is workflow-level for entity resolution and avoids task IDs, exact expected outputs, and one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0027/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0027/AGENTS.md\",\n      \"reason\": \"Path matches the rules whitelist and active rules version target.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n141,118\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T142759Z_2511442/t40/attempt_20260405T142800Z_a3cbdc",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+name = "rules_applier"
+description = "Apply one approved rules proposal into a new rules version."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Mode: apply.
+You update only codex-agent-analytics/rules_versions/*/AGENTS.md.
+Apply one focused rules change from one proposal.
+Keep edits small and reversible.
+Do not modify codex-agent-native files.
+"""

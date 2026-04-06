@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-04T18:20:41.233574+00:00",
+  "local_run_id": "local_run_20260404T181635Z_74673",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0005",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t05",
+    "affected_tasks": [
+      "t05"
+    ],
+    "problem": "Task t05 fails with fail_group=outcome_mismatch. The run reported `OUTCOME_OK` after creating a local `.ics` file, but the scorer expected a non-execution outcome (`OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION`). Evidence shows no tool capable of actually sending or scheduling a real calendar invite, so this is a completion-policy mismatch, not a runtime failure.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t05",
+      "status": "fail",
+      "fail_group": "outcome_mismatch",
+      "diagnosis": "The run reported `OUTCOME_OK` after creating a local `.ics` file, but the scorer expected a non-execution outcome (`OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION`). Evidence shows no tool capable of actually sending or scheduling a real calendar invite, so this is a completion-policy mismatch, not a runtime failure.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "The failure is caused by outcome selection and artifact-substitution behavior that can be corrected with tighter harness rules; there is no evidence of a blocking runner/tool defect.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Tighten External Scheduling Outcome Gate",
+        "hypothesis": "Agents over-claim success when asked to perform external scheduling actions by substituting local artifacts; explicit non-equivalence rules for external side effects will prevent false `OUTCOME_OK` submissions.",
+        "change": "Add a completion rule that treats calendar/event creation, invitation sending, and similar external system actions as unsupported unless a tool can execute the side effect directly. Clarify that writing local drafts/artifacts (including invite files) is not equivalent to completion unless the user explicitly requested that artifact format; otherwise return `OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION` based on ambiguity.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0005/AGENTS.md",
+            "change_summary": "Add 3-5 concise bullets in the completion section defining external scheduling side effects, artifact non-equivalence, and safe outcome selection."
+          }
+        ],
+        "rollback": "Remove the added external-scheduling and artifact-equivalence bullets from the active rules AGENTS file.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The proposal is capability-based and reusable across tasks involving external side effects, without task IDs, names, or one-off literals."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t05",
+        "problem": "A local artifact was treated as successful completion of an external calendar action, causing an outcome mismatch.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t05"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0005/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0005/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "cheduling actions by substituting local artifacts; explicit non-equivalence rules for external side effects will prevent false `OUTCOME_OK` submissions.\",\n    \"change\": \"Add a completion rule that treats calendar/event creation, invitation sending, and similar external system actions as unsupported unless a tool can execute the side effect directly. Clarify that writing local drafts/artifacts (including invite files) is not equivalent to completion unless the user explicitly requested that artifact format; otherwise return `OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION` based on ambiguity.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0005/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 concise bullets in the completion section defining external scheduling side effects, artifact non-equivalence, and safe outcome selection.\"\n      }\n    ],\n    \"rollback\": \"Remove the added external-scheduling and artifact-equivalence bullets from the active rules AGENTS file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is capability-based and reusable across tasks involving external side effects, without task IDs, names, or one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t05\",\n    \"problem\": \"A local artifact was treated as successful completion of an external calendar action, causing an outcome mismatch.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t05\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0005/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0005/AGENTS.md\",\n      \"reason\": \"Path is the active rules file and is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": " substituting local artifacts; explicit non-equivalence rules for external side effects will prevent false `OUTCOME_OK` submissions.\",\n    \"change\": \"Add a completion rule that treats calendar/event creation, invitation sending, and similar external system actions as unsupported unless a tool can execute the side effect directly. Clarify that writing local drafts/artifacts (including invite files) is not equivalent to completion unless the user explicitly requested that artifact format; otherwise return `OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION` based on ambiguity.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0005/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 concise bullets in the completion section defining external scheduling side effects, artifact non-equivalence, and safe outcome selection.\"\n      }\n    ],\n    \"rollback\": \"Remove the added external-scheduling and artifact-equivalence bullets from the active rules AGENTS file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is capability-based and reusable across tasks involving external side effects, without task IDs, names, or one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t05\",\n    \"problem\": \"A local artifact was treated as successful completion of an external calendar action, causing an outcome mismatch.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t05\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0005/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0005/AGENTS.md\",\n      \"reason\": \"Path is the active rules file and is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n121\u00a0043\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260404T181635Z_74673/t05/attempt_20260404T181635Z_818627",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

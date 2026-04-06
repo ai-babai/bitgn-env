@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-05T11:52:45.787919+00:00",
+  "local_run_id": "local_run_20260405T114558Z_2444194",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0021",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t23",
+    "affected_tasks": [
+      "t23"
+    ],
+    "problem": "Task t23 fails with fail_group=outcome_mismatch. The run returned `OUTCOME_NONE_CLARIFICATION` instead of the expected `OUTCOME_OK`. Evidence shows the agent stopped at duplicate full-name matching in `contacts/` and did not apply account-level disambiguation, even though a passing `t23` run resolved the same pattern by using workflow/account signals and proceeded with an outbox write. The current rule set over-triggers clarification for name collisions that are still deterministically resolvable.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t23",
+      "status": "fail",
+      "fail_group": "outcome_mismatch",
+      "diagnosis": "The run returned `OUTCOME_NONE_CLARIFICATION` instead of the expected `OUTCOME_OK`. Evidence shows the agent stopped at duplicate full-name matching in `contacts/` and did not apply account-level disambiguation, even though a passing `t23` run resolved the same pattern by using workflow/account signals and proceeded with an outbox write. The current rule set over-triggers clarification for name collisions that are still deterministically resolvable.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "This is a harness/policy decision issue, not a runtime blocker: the toolset already supports the required reads and writes, and another run of the same task succeeded without code changes.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Deterministic Name-Collision Tie-Breaker for Inbox Outreach",
+        "hypothesis": "When an inbox outreach request names a person and multiple contacts share that name, immediate clarification is unnecessary if account-level workflow markers can deterministically select one candidate; adding a required tie-breaker step will reduce false clarification outcomes.",
+        "change": "Refine recipient-resolution rules before `OUTCOME_NONE_CLARIFICATION`: for duplicate name matches, require a deterministic tie-break pass using repository signals (account flags/metadata, workflow cues in message text, and contact-account linkage). If exactly one candidate remains after this pass, proceed with outbox write; request clarification only when ambiguity remains after tie-breakers.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0021/AGENTS.md",
+            "change_summary": "Replace the strict 'name-only ambiguity => clarification' bullet with a short two-step rule: mandatory deterministic tie-break by account/workflow signals first, clarification only if unresolved."
+          }
+        ],
+        "rollback": "Revert the added tie-breaker bullets in `rules_versions/rv0021/AGENTS.md`, restoring immediate-clarification behavior on duplicate-name matches.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is process-level and applies to any duplicate-contact-name inbox outreach where account/workflow metadata exists; it avoids task IDs, fixed names, and one-off literals."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t23",
+        "problem": "Duplicate-name recipient handling is too conservative: clarification is triggered before deterministic account/workflow disambiguation is attempted.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t23"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0021/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0021/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "c tie-break pass using repository signals (account flags/metadata, workflow cues in message text, and contact-account linkage). If exactly one candidate remains after this pass, proceed with outbox write; request clarification only when ambiguity remains after tie-breakers.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0021/AGENTS.md\",\n        \"change_summary\": \"Replace the strict 'name-only ambiguity => clarification' bullet with a short two-step rule: mandatory deterministic tie-break by account/workflow signals first, clarification only if unresolved.\"\n      }\n    ],\n    \"rollback\": \"Revert the added tie-breaker bullets in `rules_versions/rv0021/AGENTS.md`, restoring immediate-clarification behavior on duplicate-name matches.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is process-level and applies to any duplicate-contact-name inbox outreach where account/workflow metadata exists; it avoids task IDs, fixed names, and one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t23\",\n    \"problem\": \"Duplicate-name recipient handling is too conservative: clarification is triggered before deterministic account/workflow disambiguation is attempted.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t23\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0021/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0021/AGENTS.md\",\n      \"reason\": \"Path matches rules-target whitelist (active rules version AGENTS file).\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "ng repository signals (account flags/metadata, workflow cues in message text, and contact-account linkage). If exactly one candidate remains after this pass, proceed with outbox write; request clarification only when ambiguity remains after tie-breakers.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0021/AGENTS.md\",\n        \"change_summary\": \"Replace the strict 'name-only ambiguity => clarification' bullet with a short two-step rule: mandatory deterministic tie-break by account/workflow signals first, clarification only if unresolved.\"\n      }\n    ],\n    \"rollback\": \"Revert the added tie-breaker bullets in `rules_versions/rv0021/AGENTS.md`, restoring immediate-clarification behavior on duplicate-name matches.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is process-level and applies to any duplicate-contact-name inbox outreach where account/workflow metadata exists; it avoids task IDs, fixed names, and one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t23\",\n    \"problem\": \"Duplicate-name recipient handling is too conservative: clarification is triggered before deterministic account/workflow disambiguation is attempted.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t23\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0021/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0021/AGENTS.md\",\n      \"reason\": \"Path matches rules-target whitelist (active rules version AGENTS file).\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n660,633\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T114558Z_2444194/t23/attempt_20260405T114558Z_397b5c",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

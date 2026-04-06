@@ -1,0 +1,10 @@
+[project]
+name = "codex-agent-analytics"
+version = "0.1.0"
+description = "Analysis-only companion for codex-agent-native runs"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[tool.uv]
+package = false

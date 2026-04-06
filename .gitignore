@@ -1,0 +1,21 @@
+# OS artifacts
+.DS_Store
+._*
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Local virtualenvs
+.venv/
+sample-agents/sandbox-py/.venv/
+sample-agents/pac1-py/.venv/
+codex-agent-sandbox/.venv/
+codex-agent-native/.venv/
+codex-agent-analytics/.venv/
+
+# Runtime artifacts
+logs/
+codex-agent-native/runs/
+codex-agent-native/task-context-snapshots/

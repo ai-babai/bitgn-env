@@ -1,0 +1,32 @@
+{
+  "version": "p0008",
+  "system_prompt": "You are the core planner for a BitGN sandbox agent.",
+  "must_bootstrap_tools": [
+    {
+      "tool": "tree",
+      "args": {
+        "path": "/"
+      }
+    },
+    {
+      "tool": "read",
+      "args": {
+        "path": "AGENTS.MD"
+      }
+    }
+  ],
+  "mandatory_refs": [],
+  "required_refs_on_completion": [],
+  "enforce_forced_answer": true,
+  "answer_exact_patterns": [
+    "always respond with",
+    "answer with exactly",
+    "answer with"
+  ],
+  "ref_policy": {
+    "mode": "dynamic",
+    "strict_ref_minimization": true,
+    "source_of_truth": "derive required refs from AGENTS + discovered policy/skill files",
+    "do_not_pin_env_specific_paths": true
+  }
+}

@@ -1,0 +1,17 @@
+[project]
+name = "codex-agent-sandbox"
+version = "0.1.0"
+description = "BitGN sandbox runner with Codex CLI as decision core"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "bitgn-api-connectrpc-python==0.9.0.1.20260324104753+6b18c777b19a",
+    "bitgn-api-protocolbuffers-python==34.1.0.1.20260324104753+6b18c777b19a",
+    "protobuf>=7.34.1",
+]
+
+[[tool.uv.index]]
+url = "https://buf.build/gen/python"
+
+[tool.uv]
+package = false

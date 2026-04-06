@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-04T18:08:56.467259+00:00",
+  "local_run_id": "local_run_20260404T180454Z_73643",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0003",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t04",
+    "affected_tasks": [
+      "t04"
+    ],
+    "problem": "Task t04 fails with fail_group=outcome_mismatch. The instruction required an external side effect (email delivery), but the allowed PAC1 tools were repo/file operations plus `report_completion` only. The agent wrote an internal draft and reported `OUTCOME_OK`, while the scorer expected `OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION`. This is an outcome-selection policy miss, not a runtime execution defect.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t04",
+      "status": "fail",
+      "fail_group": "outcome_mismatch",
+      "diagnosis": "The instruction required an external side effect (email delivery), but the allowed PAC1 tools were repo/file operations plus `report_completion` only. The agent wrote an internal draft and reported `OUTCOME_OK`, while the scorer expected `OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION`. This is an outcome-selection policy miss, not a runtime execution defect.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Evidence points to missing completion decision rules for unsupported external actions; no blocker indicates runner/tooling code must change.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Add External-Action Outcome Gate Before Completion",
+        "hypothesis": "When a task asks for a real-world action that available tools cannot execute, explicit feasibility gating before `report_completion` prevents false `OUTCOME_OK` submissions.",
+        "change": "Add a short pre-completion decision rule: compare requested end state against the current toolset; if the request requires an external side effect (for example sending/dispatching communication) that is not tool-supported, do not claim success. Use `OUTCOME_NONE_UNSUPPORTED` when impossible in-environment, or `OUTCOME_NONE_CLARIFICATION` when intent may allow an alternative artifact but acceptance criteria are ambiguous.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0003/AGENTS.md",
+            "change_summary": "Add 3-5 concise bullets in the completion section defining feasibility check and outcome selection for unsupported external side-effect requests."
+          }
+        ],
+        "rollback": "Remove the added external-action feasibility and outcome-selection bullets from the active rules AGENTS file.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The proposal is tool-capability based and reusable across tasks that request out-of-repo side effects, without task-specific literals."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t04",
+        "problem": "Task t04 failed because an externally-directed request was treated as completed (`OUTCOME_OK`) despite the environment lacking any tool to execute external delivery, causing an outcome mismatch.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t04"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0003/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0003/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "ute, explicit feasibility gating before `report_completion` prevents false `OUTCOME_OK` submissions.\",\n    \"change\": \"Add a short pre-completion decision rule: compare requested end state against the current toolset; if the request requires an external side effect (for example sending/dispatching communication) that is not tool-supported, do not claim success. Use `OUTCOME_NONE_UNSUPPORTED` when impossible in-environment, or `OUTCOME_NONE_CLARIFICATION` when intent may allow an alternative artifact but acceptance criteria are ambiguous.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0003/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 concise bullets in the completion section defining feasibility check and outcome selection for unsupported external side-effect requests.\"\n      }\n    ],\n    \"rollback\": \"Remove the added external-action feasibility and outcome-selection bullets from the active rules AGENTS file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is tool-capability based and reusable across tasks that request out-of-repo side effects, without task-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t04\",\n    \"problem\": \"Task t04 failed because an externally-directed request was treated as completed (`OUTCOME_OK`) despite the environment lacking any tool to execute external delivery, causing an outcome mismatch.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t04\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0003/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0003/AGENTS.md\",\n      \"reason\": \"Active rules file is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": "ility gating before `report_completion` prevents false `OUTCOME_OK` submissions.\",\n    \"change\": \"Add a short pre-completion decision rule: compare requested end state against the current toolset; if the request requires an external side effect (for example sending/dispatching communication) that is not tool-supported, do not claim success. Use `OUTCOME_NONE_UNSUPPORTED` when impossible in-environment, or `OUTCOME_NONE_CLARIFICATION` when intent may allow an alternative artifact but acceptance criteria are ambiguous.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0003/AGENTS.md\",\n        \"change_summary\": \"Add 3-5 concise bullets in the completion section defining feasibility check and outcome selection for unsupported external side-effect requests.\"\n      }\n    ],\n    \"rollback\": \"Remove the added external-action feasibility and outcome-selection bullets from the active rules AGENTS file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is tool-capability based and reusable across tasks that request out-of-repo side effects, without task-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t04\",\n    \"problem\": \"Task t04 failed because an externally-directed request was treated as completed (`OUTCOME_OK`) despite the environment lacking any tool to execute external delivery, causing an outcome mismatch.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t04\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0003/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0003/AGENTS.md\",\n      \"reason\": \"Active rules file is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n228\u00a0211\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260404T180454Z_73643/t04/attempt_20260404T180454Z_813036",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

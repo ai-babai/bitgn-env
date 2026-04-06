@@ -1,0 +1,188 @@
+{
+  "ts": "2026-04-05T14:09:53.709359+00:00",
+  "local_run_id": "local_run_20260405T135009Z_2491311",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 3,
+  "rules_version": "rv0024",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t32",
+    "affected_tasks": [
+      "t32"
+    ],
+    "problem": "Task t32 fails with fail_group=write_scope. The run failed because it wrote `accounts/acct_002.json`, which the scorer flagged as unexpected. Evidence shows task-scoped audit context asked for a focused fix (`candidate_patch: reminder_only`, `cleanup_later: true`), but the agent followed the broader dual-update rule and edited both account and reminder files.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t32",
+      "status": "fail",
+      "fail_group": "write_scope",
+      "diagnosis": "The run failed because it wrote `accounts/acct_002.json`, which the scorer flagged as unexpected. Evidence shows task-scoped audit context asked for a focused fix (`candidate_patch: reminder_only`, `cleanup_later: true`), but the agent followed the broader dual-update rule and edited both account and reminder files.",
+      "focus": {
+        "primary_task_id": "t32",
+        "problem": "Global follow-up synchronization guidance overrode task-scoped focused-patch guidance, causing an out-of-scope extra write.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t32"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "No runtime/tooling defect is required to explain this failure; the issue is instruction-precedence and write-scope discipline in rules.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Task-Scoped Patch Scope Overrides Default Date Sync",
+        "hypothesis": "Unexpected-write failures occur when default cross-record sync rules are applied even when task-scoped audit metadata explicitly narrows the patch scope and defers cleanup.",
+        "change": "Add a precedence rule: when task-provided audit/context metadata explicitly marks a focused patch scope and deferred cleanup, that scope overrides default reminder-account date synchronization for the current task. Add a pre-write scope gate requiring the agent to derive an allowed write set from instruction plus task-scoped docs, and skip consistency-only writes outside that set.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+            "change_summary": "Add concise bullets near follow-up date rules defining scoped-patch precedence and a mandatory allowed-write-set check before first mutation."
+          }
+        ],
+        "rollback": "Remove the added scoped-patch precedence and allowed-write-set gate bullets from `rules_versions/rv0024/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule addresses generic precedence between global sync defaults and task-scoped patch directives without task IDs, specific dates, or account literals."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "sal_rules\": {\n    \"title\": \"Task-Scoped Patch Scope Overrides Default Date Sync\",\n    \"hypothesis\": \"Unexpected-write failures occur when default cross-record sync rules are applied even when task-scoped audit metadata explicitly narrows the patch scope and defers cleanup.\",\n    \"change\": \"Add a precedence rule: when task-provided audit/context metadata explicitly marks a focused patch scope and deferred cleanup, that scope overrides default reminder-account date synchronization for the current task. Add a pre-write scope gate requiring the agent to derive an allowed write set from instruction plus task-scoped docs, and skip consistency-only writes outside that set.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n        \"change_summary\": \"Add concise bullets near follow-up date rules defining scoped-patch precedence and a mandatory allowed-write-set check before first mutation.\"\n      }\n    ],\n    \"rollback\": \"Remove the added scoped-patch precedence and allowed-write-set gate bullets from `rules_versions/rv0024/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule addresses generic precedence between global sync defaults and task-scoped patch directives without task IDs, specific dates, or account literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"reason\": \"Path matches the rules whitelist and active rules AGENTS target.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "itle\": \"Task-Scoped Patch Scope Overrides Default Date Sync\",\n    \"hypothesis\": \"Unexpected-write failures occur when default cross-record sync rules are applied even when task-scoped audit metadata explicitly narrows the patch scope and defers cleanup.\",\n    \"change\": \"Add a precedence rule: when task-provided audit/context metadata explicitly marks a focused patch scope and deferred cleanup, that scope overrides default reminder-account date synchronization for the current task. Add a pre-write scope gate requiring the agent to derive an allowed write set from instruction plus task-scoped docs, and skip consistency-only writes outside that set.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n        \"change_summary\": \"Add concise bullets near follow-up date rules defining scoped-patch precedence and a mandatory allowed-write-set check before first mutation.\"\n      }\n    ],\n    \"rollback\": \"Remove the added scoped-patch precedence and allowed-write-set gate bullets from `rules_versions/rv0024/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule addresses generic precedence between global sync defaults and task-scoped patch directives without task IDs, specific dates, or account literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"reason\": \"Path matches the rules whitelist and active rules AGENTS target.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n283,095\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T135009Z_2491311/t32/attempt_20260405T135009Z_026208",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "task_id": "t35",
+      "status": "fail",
+      "fail_group": "unexpected_write",
+      "diagnosis": "The run failed with scorer detail `unexpected file write 'outbox/84196.json'`. Evidence shows the agent read `outbox/seq.json` (`id=84196`) and wrote that file, while visible numbered outbox samples were much lower (`81304.json`, `81305.json`), so the write-target selection lacked a consistency gate for conflicting numbering signals.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "This is a harness decision-policy gap around write-target validation for numbered outbox files; no runtime/tooling defect is proven.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Add Outbox Sequence Consistency Gate",
+        "hypothesis": "When `outbox/seq.json` and observed numbered outbox files are inconsistent, blindly trusting one source can cause writes to scorer-disallowed paths; requiring a pre-write consistency check and clarification fallback will reduce unexpected-write failures.",
+        "change": "Add a compact preflight rule for email tasks: before writing `outbox/*.json`, compute `seq_id` from `outbox/seq.json` and `max_existing_id` from numeric outbox filenames. Proceed with mutation only when `seq_id == max_existing_id + 1` and the target file does not already exist. If not, do not write outbox files and return `OUTCOME_NONE_CLARIFICATION` with a minimal sequencing question.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+            "change_summary": "Add 4-6 bullets in the outbox/email workflow section defining `seq.json` vs filename consistency checks and mandatory clarification on mismatch before any outbox write."
+          }
+        ],
+        "rollback": "Remove the added outbox sequence-consistency and clarification-gate bullets from the active rules file.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is pattern-based for numbered-write workflows and avoids task-specific IDs, paths, or literal email content."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t35",
+        "problem": "Outbox write-target selection lacked a consistency check between `seq.json` and observed numbered files, resulting in an unexpected-write failure.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t35",
+          "t26"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "il tasks: before writing `outbox/*.json`, compute `seq_id` from `outbox/seq.json` and `max_existing_id` from numeric outbox filenames. Proceed with mutation only when `seq_id == max_existing_id + 1` and the target file does not already exist. If not, do not write outbox files and return `OUTCOME_NONE_CLARIFICATION` with a minimal sequencing question.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n        \"change_summary\": \"Add 4-6 bullets in the outbox/email workflow section defining `seq.json` vs filename consistency checks and mandatory clarification on mismatch before any outbox write.\"\n      }\n    ],\n    \"rollback\": \"Remove the added outbox sequence-consistency and clarification-gate bullets from the active rules file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is pattern-based for numbered-write workflows and avoids task-specific IDs, paths, or literal email content.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t35\",\n    \"problem\": \"Outbox write-target selection lacked a consistency check between `seq.json` and observed numbered files, resulting in an unexpected-write failure.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t35\",\n      \"t26\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"reason\": \"Path is within the rules target whitelist (`rules_versions/<active>/AGENTS.md`) and requires no normalization.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "ting `outbox/*.json`, compute `seq_id` from `outbox/seq.json` and `max_existing_id` from numeric outbox filenames. Proceed with mutation only when `seq_id == max_existing_id + 1` and the target file does not already exist. If not, do not write outbox files and return `OUTCOME_NONE_CLARIFICATION` with a minimal sequencing question.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n        \"change_summary\": \"Add 4-6 bullets in the outbox/email workflow section defining `seq.json` vs filename consistency checks and mandatory clarification on mismatch before any outbox write.\"\n      }\n    ],\n    \"rollback\": \"Remove the added outbox sequence-consistency and clarification-gate bullets from the active rules file.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is pattern-based for numbered-write workflows and avoids task-specific IDs, paths, or literal email content.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t35\",\n    \"problem\": \"Outbox write-target selection lacked a consistency check between `seq.json` and observed numbered files, resulting in an unexpected-write failure.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t35\",\n      \"t26\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"reason\": \"Path is within the rules target whitelist (`rules_versions/<active>/AGENTS.md`) and requires no normalization.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n358,104\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T135009Z_2491311/t35/attempt_20260405T135339Z_43bedb",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "task_id": "t40",
+      "status": "fail",
+      "fail_group": "ref_mismatch",
+      "diagnosis": "The answer content was correct, but scoring failed because `grounding_refs` missed a required provenance file: `contacts/mgr_001.json`. Tool evidence shows the run only searched/read `accounts/*` for `account_manager` and then called `report_completion` without citing any manager canonical record in `contacts/*`.",
+      "focus": {
+        "primary_task_id": "t40",
+        "problem": "Entity-resolution questions can pass content checks but fail scoring when `grounding_refs` omit the canonical identity source file used to bind the person filter.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t40"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "No runtime defect is proven: the toolchain returned correct account rows and completed normally; failure is in completion-time evidence discipline (missing required ref).",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Grounding Ref Coverage Gate for Entity-Filtered Answers",
+        "hypothesis": "When a query filters by a person/entity (especially with name-order variants), answering from downstream records alone can omit the canonical identity file and trigger reference-mismatch failures.",
+        "change": "Add a pre-`report_completion` gate: for person/entity-filtered outputs, require grounding refs to include (1) the canonical identity source used to resolve the filter (for CRM tasks, relevant `contacts/*` manager/contact file) and (2) the files used to produce the returned rows. If the prompt uses reordered/variant name tokens, resolve identity via canonical record first, then derive result rows.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+            "change_summary": "Add a concise completion-rule bullet set under grounding refs/report_completion requiring canonical identity-source citation plus result-source citation for entity-filtered answers."
+          }
+        ],
+        "rollback": "Remove the added grounding-ref coverage bullets from `rules_versions/rv0024/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is policy-level and applies to any entity-resolution query; it avoids task IDs, literal expected outputs, and one-off paths."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0024/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "\n  \"proposal_rules\": {\n    \"title\": \"Grounding Ref Coverage Gate for Entity-Filtered Answers\",\n    \"hypothesis\": \"When a query filters by a person/entity (especially with name-order variants), answering from downstream records alone can omit the canonical identity file and trigger reference-mismatch failures.\",\n    \"change\": \"Add a pre-`report_completion` gate: for person/entity-filtered outputs, require grounding refs to include (1) the canonical identity source used to resolve the filter (for CRM tasks, relevant `contacts/*` manager/contact file) and (2) the files used to produce the returned rows. If the prompt uses reordered/variant name tokens, resolve identity via canonical record first, then derive result rows.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n        \"change_summary\": \"Add a concise completion-rule bullet set under grounding refs/report_completion requiring canonical identity-source citation plus result-source citation for entity-filtered answers.\"\n      }\n    ],\n    \"rollback\": \"Remove the added grounding-ref coverage bullets from `rules_versions/rv0024/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is policy-level and applies to any entity-resolution query; it avoids task IDs, literal expected outputs, and one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"reason\": \"active rules file\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": " {\n    \"title\": \"Grounding Ref Coverage Gate for Entity-Filtered Answers\",\n    \"hypothesis\": \"When a query filters by a person/entity (especially with name-order variants), answering from downstream records alone can omit the canonical identity file and trigger reference-mismatch failures.\",\n    \"change\": \"Add a pre-`report_completion` gate: for person/entity-filtered outputs, require grounding refs to include (1) the canonical identity source used to resolve the filter (for CRM tasks, relevant `contacts/*` manager/contact file) and (2) the files used to produce the returned rows. If the prompt uses reordered/variant name tokens, resolve identity via canonical record first, then derive result rows.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n        \"change_summary\": \"Add a concise completion-rule bullet set under grounding refs/report_completion requiring canonical identity-source citation plus result-source citation for entity-filtered answers.\"\n      }\n    ],\n    \"rollback\": \"Remove the added grounding-ref coverage bullets from `rules_versions/rv0024/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is policy-level and applies to any entity-resolution query; it avoids task IDs, literal expected outputs, and one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"accepted\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0024/AGENTS.md\",\n      \"reason\": \"active rules file\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n178,257\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T135009Z_2491311/t40/attempt_20260405T135803Z_25c2bf",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

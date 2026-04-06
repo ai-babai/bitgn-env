@@ -1,0 +1,76 @@
+{
+  "ts": "2026-04-05T11:58:38.618906+00:00",
+  "local_run_id": "local_run_20260405T114558Z_2444197",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0022",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t26",
+    "affected_tasks": [
+      "t26"
+    ],
+    "problem": "Task t26 fails with fail_group=outcome_mismatch. The run produced malformed JSON in both `outbox/84027.json` and `outbox/seq.json` by writing escaped quote artifacts (`\\\"`) on first write, then reported `OUTCOME_NONE_UNSUPPORTED` instead of completing the requested outbox action. Evidence is in `tool_calls.jsonl` write args and post-write reads showing escaped content. This is a behavior/rules-execution reliability issue, not a proven runtime capability gap, because other runs of the same task pattern wrote valid JSON and passed.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t26",
+      "status": "fail",
+      "fail_group": "outcome_mismatch",
+      "diagnosis": "The run produced malformed JSON in both `outbox/84027.json` and `outbox/seq.json` by writing escaped quote artifacts (`\\\"`) on first write, then reported `OUTCOME_NONE_UNSUPPORTED` instead of completing the requested outbox action. Evidence is in `tool_calls.jsonl` write args and post-write reads showing escaped content. This is a behavior/rules-execution reliability issue, not a proven runtime capability gap, because other runs of the same task pattern wrote valid JSON and passed.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "The native runtime can already perform correct JSON writes (`write` + `read` + `report_completion`) in comparable runs (including another `t26` pass and `t23` pass), so a harness/rules tightening is the first-line fix.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "JSON Preflight Gate Before First Write",
+        "hypothesis": "Malformed `*.json` outputs recur when the agent composes write payloads with pre-escaped quotes; under single-write constraints this converts a recoverable formatting mistake into hard task failure.",
+        "change": "Add a short mandatory preflight rule for every `*.json` write: finalize payload in literal JSON form (no `\\\"` artifacts), perform a pre-write escape scan, and only then execute the first write. For multi-file outbox updates, require sequential gating: validate email payload first, then validate and write `seq.json`; never issue both JSON writes before payload preflight passes.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0022/AGENTS.md",
+            "change_summary": "Insert a concise preflight checklist near existing JSON write constraints to enforce literal-JSON payload validation before any `write`, plus ordered gating for outbox email/seq writes."
+          }
+        ],
+        "rollback": "Remove the added preflight and ordered-gating bullets from `rules_versions/rv0022/AGENTS.md`, restoring previous JSON write guidance.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule applies to all JSON-writing workflows and does not rely on task IDs, specific recipients, or one-off file names."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t26",
+        "problem": "First-write JSON escaping errors (`\\\"`) are not being prevented early enough, causing non-OK completion on otherwise supported outbox tasks.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t26",
+          "t17"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0022/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0022/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "`*.json` write: finalize payload in literal JSON form (no `\\\\\\\"` artifacts), perform a pre-write escape scan, and only then execute the first write. For multi-file outbox updates, require sequential gating: validate email payload first, then validate and write `seq.json`; never issue both JSON writes before payload preflight passes.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0022/AGENTS.md\",\n        \"change_summary\": \"Insert a concise preflight checklist near existing JSON write constraints to enforce literal-JSON payload validation before any `write`, plus ordered gating for outbox email/seq writes.\"\n      }\n    ],\n    \"rollback\": \"Remove the added preflight and ordered-gating bullets from `rules_versions/rv0022/AGENTS.md`, restoring previous JSON write guidance.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to all JSON-writing workflows and does not rely on task IDs, specific recipients, or one-off file names.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t26\",\n    \"problem\": \"First-write JSON escaping errors (`\\\\\\\"`) are not being prevented early enough, causing non-OK completion on otherwise supported outbox tasks.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t26\",\n      \"t17\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0022/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0022/AGENTS.md\",\n      \"reason\": \"Path matches rules-target whitelist and current active rules version AGENTS file.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "lize payload in literal JSON form (no `\\\\\\\"` artifacts), perform a pre-write escape scan, and only then execute the first write. For multi-file outbox updates, require sequential gating: validate email payload first, then validate and write `seq.json`; never issue both JSON writes before payload preflight passes.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0022/AGENTS.md\",\n        \"change_summary\": \"Insert a concise preflight checklist near existing JSON write constraints to enforce literal-JSON payload validation before any `write`, plus ordered gating for outbox email/seq writes.\"\n      }\n    ],\n    \"rollback\": \"Remove the added preflight and ordered-gating bullets from `rules_versions/rv0022/AGENTS.md`, restoring previous JSON write guidance.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to all JSON-writing workflows and does not rely on task IDs, specific recipients, or one-off file names.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t26\",\n    \"problem\": \"First-write JSON escaping errors (`\\\\\\\"`) are not being prevented early enough, causing non-OK completion on otherwise supported outbox tasks.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t26\",\n      \"t17\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0022/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0022/AGENTS.md\",\n      \"reason\": \"Path matches rules-target whitelist and current active rules version AGENTS file.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n284,998\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T114558Z_2444197/t26/attempt_20260405T114558Z_f704ea",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

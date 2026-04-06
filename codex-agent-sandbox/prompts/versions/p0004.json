@@ -1,0 +1,36 @@
+{
+  "version": "p0004",
+  "system_prompt": "You are the core planner for a BitGN sandbox agent.",
+  "must_bootstrap_tools": [
+    {
+      "tool": "tree",
+      "args": {
+        "path": "/"
+      }
+    },
+    {
+      "tool": "read",
+      "args": {
+        "path": "AGENTS.MD"
+      }
+    }
+  ],
+  "mandatory_refs": [
+    "AGENTS.MD",
+    "agent-hints/skill-todo.md",
+    "docs/cleanup-policy.md",
+    "docs/skill-todo.md"
+  ],
+  "required_refs_on_completion": [
+    "AGENTS.MD",
+    "agent-hints/skill-todo.md",
+    "docs/cleanup-policy.md",
+    "docs/skill-todo.md"
+  ],
+  "enforce_forced_answer": true,
+  "answer_exact_patterns": [
+    "always respond with",
+    "answer with exactly",
+    "answer with"
+  ]
+}

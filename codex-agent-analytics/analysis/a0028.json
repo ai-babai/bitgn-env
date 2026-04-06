@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-05T16:11:16.059560+00:00",
+  "local_run_id": "local_run_20260405T150743Z_2529863",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 1,
+  "rules_version": "rv0029",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t23",
+    "affected_tasks": [
+      "t23"
+    ],
+    "problem": "Task t23 fails with fail_group=unexpected_write. The run wrote `outbox/84238.json` and then `outbox/seq.json`, but scoring flagged the new outbox email file as unexpected. Evidence shows the agent resolved duplicate same-name contacts via a local tie-break and proceeded to send, while inbox policy docs require clarification when multiple contacts could match. This indicates a rules-precedence gap around ambiguity handling before outbound writes.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t23",
+      "status": "fail",
+      "fail_group": "unexpected_write",
+      "diagnosis": "The run wrote `outbox/84238.json` and then `outbox/seq.json`, but scoring flagged the new outbox email file as unexpected. Evidence shows the agent resolved duplicate same-name contacts via a local tie-break and proceeded to send, while inbox policy docs require clarification when multiple contacts could match. This indicates a rules-precedence gap around ambiguity handling before outbound writes.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "No runtime/tooling defect is required to explain this failure; the behavior is driven by policy interpretation and can be corrected with a small rules change.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Ambiguous Recipient Hard-Stop Before Outbox Writes",
+        "hypothesis": "Unexpected outbox writes recur when duplicate contact-name ambiguity is resolved by heuristic tie-breaks instead of a clarification stop required by trusted inbox/docs guardrails.",
+        "change": "Add a precedence gate for inbox/email workflows: if multiple contacts match a person name and no unique identifier is present in the instruction/message (for example exact email, contact id, or unambiguous account linkage), do not write `outbox/*.json` and return `OUTCOME_NONE_CLARIFICATION`. Explicitly state that duplicate-name heuristic tie-breaks cannot override trusted docs guardrails that require clarification on multi-match contact resolution.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0029/AGENTS.md",
+            "change_summary": "Edit the duplicate-name recipient bullets to enforce clarification-first behavior and add a strict no-outbox-write gate under unresolved multi-match ambiguity."
+          }
+        ],
+        "rollback": "Revert the added ambiguity precedence/no-write bullets in `rules_versions/rv0029/AGENTS.md`, restoring the prior duplicate-name tie-break behavior.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 24,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule targets a generic ambiguity-resolution pattern in inbox/email tasks and avoids task IDs, exact filenames, and one-off literals."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t23",
+        "problem": "A duplicate-name recipient was heuristically resolved and an outbox email was written, but trusted inbox guardrails required clarification for multi-contact matches.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t23"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0029/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0029/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "ruction/message (for example exact email, contact id, or unambiguous account linkage), do not write `outbox/*.json` and return `OUTCOME_NONE_CLARIFICATION`. Explicitly state that duplicate-name heuristic tie-breaks cannot override trusted docs guardrails that require clarification on multi-match contact resolution.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0029/AGENTS.md\",\n        \"change_summary\": \"Edit the duplicate-name recipient bullets to enforce clarification-first behavior and add a strict no-outbox-write gate under unresolved multi-match ambiguity.\"\n      }\n    ],\n    \"rollback\": \"Revert the added ambiguity precedence/no-write bullets in `rules_versions/rv0029/AGENTS.md`, restoring the prior duplicate-name tie-break behavior.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 24,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule targets a generic ambiguity-resolution pattern in inbox/email tasks and avoids task IDs, exact filenames, and one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t23\",\n    \"problem\": \"A duplicate-name recipient was heuristically resolved and an outbox email was written, but trusted inbox guardrails required clarification for multi-contact matches.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t23\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0029/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0029/AGENTS.md\",\n      \"reason\": \"Path is within the rules whitelist and points to the active rules version AGENTS file.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": " example exact email, contact id, or unambiguous account linkage), do not write `outbox/*.json` and return `OUTCOME_NONE_CLARIFICATION`. Explicitly state that duplicate-name heuristic tie-breaks cannot override trusted docs guardrails that require clarification on multi-match contact resolution.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0029/AGENTS.md\",\n        \"change_summary\": \"Edit the duplicate-name recipient bullets to enforce clarification-first behavior and add a strict no-outbox-write gate under unresolved multi-match ambiguity.\"\n      }\n    ],\n    \"rollback\": \"Revert the added ambiguity precedence/no-write bullets in `rules_versions/rv0029/AGENTS.md`, restoring the prior duplicate-name tie-break behavior.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 24,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule targets a generic ambiguity-resolution pattern in inbox/email tasks and avoids task IDs, exact filenames, and one-off literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t23\",\n    \"problem\": \"A duplicate-name recipient was heuristically resolved and an outbox email was written, but trusted inbox guardrails required clarification for multi-contact matches.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t23\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0029/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0029/AGENTS.md\",\n      \"reason\": \"Path is within the rules whitelist and points to the active rules version AGENTS file.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n176,648\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T150743Z_2529863/t23/attempt_20260405T152605Z_dd3033",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "ts": "2026-04-05T14:25:30.426918+00:00",
+  "local_run_id": "local_run_20260405T141258Z_2504781",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 2,
+  "rules_version": "rv0026",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t32",
+    "affected_tasks": [
+      "t32"
+    ],
+    "problem": "Task t32 fails with fail_group=missing_account_write. The run updated only `reminders/rem_005.json` and reported success, but scoring required a write to `accounts/acct_005.json`. Evidence shows root `AGENTS.md` explicitly requires updating both reminder and owning account when both carry the follow-up date, and both records were read with matching date fields before mutation. The failure is a harness-rule precedence issue, not a runtime/tooling limitation.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t32",
+      "status": "fail",
+      "fail_group": "missing_account_write",
+      "diagnosis": "The run updated only `reminders/rem_005.json` and reported success, but scoring required a write to `accounts/acct_005.json`. Evidence shows root `AGENTS.md` explicitly requires updating both reminder and owning account when both carry the follow-up date, and both records were read with matching date fields before mutation. The failure is a harness-rule precedence issue, not a runtime/tooling limitation.",
+      "focus": {
+        "primary_task_id": "t32",
+        "problem": "Follow-up reschedule tasks under-update when task-scoped audit metadata is treated as authoritative scope and suppresses required cross-record date sync, causing missed required account writes.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t32"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "No runtime defect is required to explain the miss: tools worked, paths were accessible, and the wrong write set came from local-rules precedence guidance.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Authoritative Follow-Up Sync Beats Advisory Audit Scope",
+        "hypothesis": "If local rules treat task-scoped audit hints as advisory unless explicitly marked authoritative by trusted policy, agents will preserve required reminder-account date alignment and avoid under-scoped writes.",
+        "change": "In follow-up reschedule guidance, replace the current scoped-audit precedence bullet with a stricter rule: advisory audit/context fields (for example candidate patch or deferred cleanup hints) cannot override mandatory cross-record invariants from root policy and schema docs. Add a pre-write gate for follow-up date changes: when both owning account and reminder contain the workflow date field, include both files in the allowed write set and update them in one focused patch.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0026/AGENTS.md",
+            "change_summary": "Edit the follow-up precedence section to demote advisory audit scope hints and enforce dual-record sync when both account and reminder store the date."
+          }
+        ],
+        "rollback": "Revert the follow-up precedence edit in `rules_versions/rv0026/AGENTS.md` to restore prior scoped-audit override behavior.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule applies to any follow-up reschedule where duplicated dates exist across linked records and does not depend on task IDs, account names, or literal dates."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0026/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0026/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "es\": {\n    \"title\": \"Authoritative Follow-Up Sync Beats Advisory Audit Scope\",\n    \"hypothesis\": \"If local rules treat task-scoped audit hints as advisory unless explicitly marked authoritative by trusted policy, agents will preserve required reminder-account date alignment and avoid under-scoped writes.\",\n    \"change\": \"In follow-up reschedule guidance, replace the current scoped-audit precedence bullet with a stricter rule: advisory audit/context fields (for example candidate patch or deferred cleanup hints) cannot override mandatory cross-record invariants from root policy and schema docs. Add a pre-write gate for follow-up date changes: when both owning account and reminder contain the workflow date field, include both files in the allowed write set and update them in one focused patch.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n        \"change_summary\": \"Edit the follow-up precedence section to demote advisory audit scope hints and enforce dual-record sync when both account and reminder store the date.\"\n      }\n    ],\n    \"rollback\": \"Revert the follow-up precedence edit in `rules_versions/rv0026/AGENTS.md` to restore prior scoped-audit override behavior.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to any follow-up reschedule where duplicated dates exist across linked records and does not depend on task IDs, account names, or literal dates.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"reason\": \"Path is within the rules whitelist and already points to the active rules version file.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": "\"Authoritative Follow-Up Sync Beats Advisory Audit Scope\",\n    \"hypothesis\": \"If local rules treat task-scoped audit hints as advisory unless explicitly marked authoritative by trusted policy, agents will preserve required reminder-account date alignment and avoid under-scoped writes.\",\n    \"change\": \"In follow-up reschedule guidance, replace the current scoped-audit precedence bullet with a stricter rule: advisory audit/context fields (for example candidate patch or deferred cleanup hints) cannot override mandatory cross-record invariants from root policy and schema docs. Add a pre-write gate for follow-up date changes: when both owning account and reminder contain the workflow date field, include both files in the allowed write set and update them in one focused patch.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n        \"change_summary\": \"Edit the follow-up precedence section to demote advisory audit scope hints and enforce dual-record sync when both account and reminder store the date.\"\n      }\n    ],\n    \"rollback\": \"Revert the follow-up precedence edit in `rules_versions/rv0026/AGENTS.md` to restore prior scoped-audit override behavior.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to any follow-up reschedule where duplicated dates exist across linked records and does not depend on task IDs, account names, or literal dates.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"reason\": \"Path is within the rules whitelist and already points to the active rules version file.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n169,996\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T141258Z_2504781/t32/attempt_20260405T141258Z_bd857b",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "task_id": "t40",
+      "status": "fail",
+      "fail_group": "ref_mismatch",
+      "diagnosis": "The answer text was correct, but scoring failed because `grounding_refs` omitted the required canonical manager reference `contacts/mgr_001.json`. Tool traces show the run searched and read only `accounts/*` for `account_manager` matches, then completed without reading/citing a manager identity file from `contacts/*`.",
+      "focus": {
+        "primary_task_id": "t40",
+        "problem": "Entity-filtered queries can fail scoring when the agent derives rows from downstream records but does not cite the canonical identity source used to bind the person filter.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t40"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "No runtime/tooling defect is required to explain this failure; the miss is completion-time evidence discipline and entity-resolution provenance in rules.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Canonical Identity Citation Gate for Entity Filters",
+        "hypothesis": "Reference-mismatch failures occur when person/entity-filtered answers are built from result rows only, without grounding the filter term to a canonical identity record first.",
+        "change": "Add a pre-`report_completion` rule for entity-filtered tasks: resolve the queried person/entity through the canonical source record first (CRM: relevant `contacts/*.json` manager/contact file), then derive matching result rows (e.g., `accounts/*.json`). Require grounding refs to include both the canonical identity source and the row-source files used in the final answer.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0026/AGENTS.md",
+            "change_summary": "Add concise bullets in the completion/grounding section that enforce canonical identity resolution + citation before returning entity-filtered results."
+          }
+        ],
+        "rollback": "Remove the added canonical-identity grounding gate bullets from `rules_versions/rv0026/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is workflow-level and applies to any person/entity filter query without task IDs, fixed values, or one-off paths."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0026/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0026/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": ",\n  \"proposal_rules\": {\n    \"title\": \"Canonical Identity Citation Gate for Entity Filters\",\n    \"hypothesis\": \"Reference-mismatch failures occur when person/entity-filtered answers are built from result rows only, without grounding the filter term to a canonical identity record first.\",\n    \"change\": \"Add a pre-`report_completion` rule for entity-filtered tasks: resolve the queried person/entity through the canonical source record first (CRM: relevant `contacts/*.json` manager/contact file), then derive matching result rows (e.g., `accounts/*.json`). Require grounding refs to include both the canonical identity source and the row-source files used in the final answer.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n        \"change_summary\": \"Add concise bullets in the completion/grounding section that enforce canonical identity resolution + citation before returning entity-filtered results.\"\n      }\n    ],\n    \"rollback\": \"Remove the added canonical-identity grounding gate bullets from `rules_versions/rv0026/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is workflow-level and applies to any person/entity filter query without task IDs, fixed values, or one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"reason\": \"Path matches rules whitelist (`rules_versions/<active>/AGENTS.md`) and uses the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": ": {\n    \"title\": \"Canonical Identity Citation Gate for Entity Filters\",\n    \"hypothesis\": \"Reference-mismatch failures occur when person/entity-filtered answers are built from result rows only, without grounding the filter term to a canonical identity record first.\",\n    \"change\": \"Add a pre-`report_completion` rule for entity-filtered tasks: resolve the queried person/entity through the canonical source record first (CRM: relevant `contacts/*.json` manager/contact file), then derive matching result rows (e.g., `accounts/*.json`). Require grounding refs to include both the canonical identity source and the row-source files used in the final answer.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n        \"change_summary\": \"Add concise bullets in the completion/grounding section that enforce canonical identity resolution + citation before returning entity-filtered results.\"\n      }\n    ],\n    \"rollback\": \"Remove the added canonical-identity grounding gate bullets from `rules_versions/rv0026/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is workflow-level and applies to any person/entity filter query without task IDs, fixed values, or one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0026/AGENTS.md\",\n      \"reason\": \"Path matches rules whitelist (`rules_versions/<active>/AGENTS.md`) and uses the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n146,738\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T141258Z_2504781/t40/attempt_20260405T141441Z_24b66e",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

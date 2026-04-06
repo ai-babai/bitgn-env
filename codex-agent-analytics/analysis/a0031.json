@@ -1,0 +1,187 @@
+{
+  "ts": "2026-04-06T06:10:27.434273+00:00",
+  "local_run_id": "local_run_20260405T215418Z_2700233",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 3,
+  "rules_version": "rv0032",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t13",
+    "affected_tasks": [
+      "t13"
+    ],
+    "problem": "Task t13 fails with fail_group=date_anchor. The failure is an anchor-date selection error, not a sync error. In `tool_calls.jsonl`, `context` returned `2026-11-15T00:00:00Z`, but the agent used `2026-04-05` from session timing and wrote `2026-04-19` instead of expected `2026-11-29`. Account/reminder cross-record alignment was handled correctly; the incorrect anchor drove the wrong result.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t13",
+      "status": "fail",
+      "fail_group": "date_anchor",
+      "diagnosis": "The failure is an anchor-date selection error, not a sync error. In `tool_calls.jsonl`, `context` returned `2026-11-15T00:00:00Z`, but the agent used `2026-04-05` from session timing and wrote `2026-04-19` instead of expected `2026-11-29`. Account/reminder cross-record alignment was handled correctly; the incorrect anchor drove the wrong result.",
+      "focus": {
+        "primary_task_id": "t13",
+        "problem": "Relative-date rescheduling used session/host date instead of verified runtime `context.time`, causing a large date drift despite otherwise focused edits.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t13"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Runtime already provided the correct anchor via `context`; the miss came from execution discipline (not enforcing verified anchor capture before mutation), so a rules-level fix is sufficient.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Enforce Verified Runtime Anchor Before Relative-Date Writes",
+        "hypothesis": "If the agent must explicitly read and restate `context.time` as the working anchor before any relative-date mutation, it will avoid accidental use of host/session timestamps and prevent anchor drift.",
+        "change": "Add a compact rule in AGENTS date-handling section: for any instruction with relative time (`in N days/weeks`, `next week`, etc.), call `context` and capture the returned `time` value as the only default anchor; do not use shell/system/session timestamps. If tool payload visibility is limited, re-run with visible output mode before computing dates. Require a pre-write self-check line that states `anchor=<YYYY-MM-DD>, delta=<...>, result=<YYYY-MM-DD>`; if anchor cannot be verified, stop mutations and return clarification.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+            "change_summary": "Add 6-10 lines under relative-date rules to mandate verified `context.time` anchoring, prohibit host/session date fallback, and require pre-write anchor/delta/result check."
+          }
+        ],
+        "rollback": "Revert the added relative-date anchor-check block from `rules_versions/rv0032/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The proposal targets generic relative-date behavior and does not depend on task IDs, specific accounts, or fixed calendar literals."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "mutation, it will avoid accidental use of host/session timestamps and prevent anchor drift.\",\n    \"change\": \"Add a compact rule in AGENTS date-handling section: for any instruction with relative time (`in N days/weeks`, `next week`, etc.), call `context` and capture the returned `time` value as the only default anchor; do not use shell/system/session timestamps. If tool payload visibility is limited, re-run with visible output mode before computing dates. Require a pre-write self-check line that states `anchor=<YYYY-MM-DD>, delta=<...>, result=<YYYY-MM-DD>`; if anchor cannot be verified, stop mutations and return clarification.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n        \"change_summary\": \"Add 6-10 lines under relative-date rules to mandate verified `context.time` anchoring, prohibit host/session date fallback, and require pre-write anchor/delta/result check.\"\n      }\n    ],\n    \"rollback\": \"Revert the added relative-date anchor-check block from `rules_versions/rv0032/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal targets generic relative-date behavior and does not depend on task IDs, specific accounts, or fixed calendar literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"reason\": \"Normalized `<active>` using `rules_versions/active_version.txt` (`rv0032`); target is in rules whitelist.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"(none)\",\n      \"final_path\": \"(none)\",\n      \"reason\": \"Code assessment is optional and `proposal_code` is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "oid accidental use of host/session timestamps and prevent anchor drift.\",\n    \"change\": \"Add a compact rule in AGENTS date-handling section: for any instruction with relative time (`in N days/weeks`, `next week`, etc.), call `context` and capture the returned `time` value as the only default anchor; do not use shell/system/session timestamps. If tool payload visibility is limited, re-run with visible output mode before computing dates. Require a pre-write self-check line that states `anchor=<YYYY-MM-DD>, delta=<...>, result=<YYYY-MM-DD>`; if anchor cannot be verified, stop mutations and return clarification.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n        \"change_summary\": \"Add 6-10 lines under relative-date rules to mandate verified `context.time` anchoring, prohibit host/session date fallback, and require pre-write anchor/delta/result check.\"\n      }\n    ],\n    \"rollback\": \"Revert the added relative-date anchor-check block from `rules_versions/rv0032/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal targets generic relative-date behavior and does not depend on task IDs, specific accounts, or fixed calendar literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"reason\": \"Normalized `<active>` using `rules_versions/active_version.txt` (`rv0032`); target is in rules whitelist.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"(none)\",\n      \"final_path\": \"(none)\",\n      \"reason\": \"Code assessment is optional and `proposal_code` is null.\"\n    }\n  ]\n}\ntokens used\n378,777\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T215418Z_2700233/t13/attempt_20260405T220234Z_55ac71",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "task_id": "t17",
+      "status": "fail",
+      "fail_group": "json_rewrite_lockout",
+      "diagnosis": "The run resolved the recipient and account correctly, then chose the correct outbox id from `outbox/seq.json`. It wrote `outbox/84482.json` with escaped-quote artifacts (`\\\"`), producing invalid JSON on read-back, and then stopped without bumping `outbox/seq.json`, ending with `OUTCOME_ERR_INTERNAL` instead of `OUTCOME_OK`.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Evidence points to execution-policy behavior (JSON write discipline and recovery policy), not a proven runtime/tooling defect; a focused rules change can address this failure mode.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Permit One Validation-Gated Recovery Rewrite For New Outbox JSON",
+        "hypothesis": "A strict no-rewrite lockout on `outbox/<id>.json` turns occasional first-write escaping artifacts into hard internal failures, even when the intended email payload is otherwise deterministically correct.",
+        "change": "Adjust outbox JSON mutation guidance so that for newly created `outbox/<id>.json`, exactly one immediate corrective rewrite is allowed only when post-write validation proves the first write is syntactically invalid JSON or contains escape-artifact corruption (for example `\\\"`). Keep preflight checks mandatory, forbid any downstream write (including `outbox/seq.json`) until the outbox file validates, and keep one-write behavior for already-valid first writes.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+            "change_summary": "Replace the absolute ban on corrective rewrite for `outbox/<id>.json` with a narrow single-recovery exception tied to failed post-write JSON validation, preserving existing sequencing and validation gates."
+          }
+        ],
+        "rollback": "Revert the edited outbox JSON write bullets in `rules_versions/rv0032/AGENTS.md` to restore the previous absolute no-corrective-rewrite rule.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule targets a reusable JSON-write recovery pattern across outbox workflows and does not depend on task-specific ids, names, or literal message content."
+        }
+      },
+      "proposal_code": null,
+      "focus": {
+        "primary_task_id": "t17",
+        "problem": "Tool trace shows a malformed first write to `outbox/84482.json` (escaped quotes), confirmed by immediate read-back, followed by termination before `seq.json` bump due outbox rewrite lockout; this creates outcome failure despite correct recipient resolution and intent.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t17"
+        ]
+      },
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "owed only when post-write validation proves the first write is syntactically invalid JSON or contains escape-artifact corruption (for example `\\\\\\\"`). Keep preflight checks mandatory, forbid any downstream write (including `outbox/seq.json`) until the outbox file validates, and keep one-write behavior for already-valid first writes.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n        \"change_summary\": \"Replace the absolute ban on corrective rewrite for `outbox/<id>.json` with a narrow single-recovery exception tied to failed post-write JSON validation, preserving existing sequencing and validation gates.\"\n      }\n    ],\n    \"rollback\": \"Revert the edited outbox JSON write bullets in `rules_versions/rv0032/AGENTS.md` to restore the previous absolute no-corrective-rewrite rule.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule targets a reusable JSON-write recovery pattern across outbox workflows and does not depend on task-specific ids, names, or literal message content.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t17\",\n    \"problem\": \"Tool trace shows a malformed first write to `outbox/84482.json` (escaped quotes), confirmed by immediate read-back, followed by termination before `seq.json` bump due outbox rewrite lockout; this creates outcome failure despite correct recipient resolution and intent.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t17\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"reason\": \"Path is on the rules whitelist and already points to the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": "write validation proves the first write is syntactically invalid JSON or contains escape-artifact corruption (for example `\\\\\\\"`). Keep preflight checks mandatory, forbid any downstream write (including `outbox/seq.json`) until the outbox file validates, and keep one-write behavior for already-valid first writes.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n        \"change_summary\": \"Replace the absolute ban on corrective rewrite for `outbox/<id>.json` with a narrow single-recovery exception tied to failed post-write JSON validation, preserving existing sequencing and validation gates.\"\n      }\n    ],\n    \"rollback\": \"Revert the edited outbox JSON write bullets in `rules_versions/rv0032/AGENTS.md` to restore the previous absolute no-corrective-rewrite rule.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule targets a reusable JSON-write recovery pattern across outbox workflows and does not depend on task-specific ids, names, or literal message content.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"focus\": {\n    \"primary_task_id\": \"t17\",\n    \"problem\": \"Tool trace shows a malformed first write to `outbox/84482.json` (escaped quotes), confirmed by immediate read-back, followed by termination before `seq.json` bump due outbox rewrite lockout; this creates outcome failure despite correct recipient resolution and intent.\",\n    \"solution_type\": \"rules\",\n    \"affected_tasks\": [\n      \"t17\"\n    ]\n  },\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"reason\": \"Path is on the rules whitelist and already points to the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n245,351\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T215418Z_2700233/t17/attempt_20260405T220624Z_293e6a",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "task_id": "t32",
+      "status": "fail",
+      "fail_group": "write_redundancy",
+      "diagnosis": "The run made the correct semantic update, but wrote each target JSON file twice. Tool evidence shows a first write with escaped-quote artifacts (`\\\"`) followed by corrective rewrites to the same paths; scoring then flagged unexpected file writes on both files. This is a write-discipline/payload-transport failure, not a missing business rule about which records to update.",
+      "focus": {
+        "primary_task_id": "t32",
+        "problem": "JSON payload transport produced malformed first writes, triggering same-path corrective rewrites that violate strict write expectations.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t32"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "The runtime already supports successful single-pass edits; failure is explained by agent-side execution discipline for JSON writes and can be addressed with rules.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Transport-Safe Single-Pass JSON Writes",
+        "hypothesis": "Unexpected-write failures recur when JSON is passed through shell-escaped inline payloads, producing malformed first writes and same-path corrective rewrites.",
+        "change": "Add a high-priority JSON write rule: before any JSON mutation, construct the final payload in transport-safe form (stdin/heredoc/file-based content) and verify it contains normal JSON quotes (no escaped-quote artifacts). Require one-pass writes for existing JSON targets in focused-diff tasks; if post-write validation fails, stop with a non-OK outcome instead of rewriting the same path.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+            "change_summary": "Add concise execution bullets in the JSON/write-discipline section to enforce transport-safe payload delivery and no same-path corrective rewrite for focused-diff JSON edits."
+          }
+        ],
+        "rollback": "Remove the added transport-safe JSON and one-pass focused-diff bullets from `rules_versions/rv0031/AGENTS.md`, restoring prior JSON write behavior.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 24,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The proposal targets a reusable JSON write-transport failure mode and avoids task IDs, specific account names, and literal expected values."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0031/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "SON Writes\",\n    \"hypothesis\": \"Unexpected-write failures recur when JSON is passed through shell-escaped inline payloads, producing malformed first writes and same-path corrective rewrites.\",\n    \"change\": \"Add a high-priority JSON write rule: before any JSON mutation, construct the final payload in transport-safe form (stdin/heredoc/file-based content) and verify it contains normal JSON quotes (no escaped-quote artifacts). Require one-pass writes for existing JSON targets in focused-diff tasks; if post-write validation fails, stop with a non-OK outcome instead of rewriting the same path.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0031/AGENTS.md\",\n        \"change_summary\": \"Add concise execution bullets in the JSON/write-discipline section to enforce transport-safe payload delivery and no same-path corrective rewrite for focused-diff JSON edits.\"\n      }\n    ],\n    \"rollback\": \"Remove the added transport-safe JSON and one-pass focused-diff bullets from `rules_versions/rv0031/AGENTS.md`, restoring prior JSON write behavior.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 24,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal targets a reusable JSON write-transport failure mode and avoids task IDs, specific account names, and literal expected values.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0031/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0031/AGENTS.md\",\n      \"reason\": \"Path is in the rules whitelist and already points to the active rules-version AGENTS target.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "pothesis\": \"Unexpected-write failures recur when JSON is passed through shell-escaped inline payloads, producing malformed first writes and same-path corrective rewrites.\",\n    \"change\": \"Add a high-priority JSON write rule: before any JSON mutation, construct the final payload in transport-safe form (stdin/heredoc/file-based content) and verify it contains normal JSON quotes (no escaped-quote artifacts). Require one-pass writes for existing JSON targets in focused-diff tasks; if post-write validation fails, stop with a non-OK outcome instead of rewriting the same path.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0031/AGENTS.md\",\n        \"change_summary\": \"Add concise execution bullets in the JSON/write-discipline section to enforce transport-safe payload delivery and no same-path corrective rewrite for focused-diff JSON edits.\"\n      }\n    ],\n    \"rollback\": \"Remove the added transport-safe JSON and one-pass focused-diff bullets from `rules_versions/rv0031/AGENTS.md`, restoring prior JSON write behavior.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 24,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal targets a reusable JSON write-transport failure mode and avoids task IDs, specific account names, and literal expected values.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0031/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0031/AGENTS.md\",\n      \"reason\": \"Path is in the rules whitelist and already points to the active rules-version AGENTS target.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No blocking code proposal (`classification=optional`).\"\n    }\n  ]\n}\ntokens used\n301,307\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260405T215418Z_2700233/t32/attempt_20260405T221742Z_45257e",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}
