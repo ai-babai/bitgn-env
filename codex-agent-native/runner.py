@@ -46,7 +46,12 @@ NATIVE_RUNS_DIR = os.getenv("NATIVE_RUNS_DIR") or str(
 )
 NATIVE_LOG_LEVEL = (os.getenv("NATIVE_LOG_LEVEL") or "info").strip().lower()
 NATIVE_PARALLELISM = max(1, int(os.getenv("NATIVE_PARALLELISM") or 2))
+BITGN_FEEDBACK_MODE = (os.getenv("BITGN_FEEDBACK_MODE") or "strict").strip().lower()
 MANIFEST_LOCK = threading.Lock()
+
+
+def _feedback_optional() -> bool:
+    return BITGN_FEEDBACK_MODE in {"optional", "best_effort", "soft"}
 
 
 def _cli(msg: str) -> None:
@@ -190,20 +195,24 @@ def detect_env() -> str:
 
 
 def _score_payload(
-    score: float,
+    score: float | None,
     detail: list[str],
     submission: dict[str, Any],
     usage: dict[str, Any],
     steps: int,
+    feedback_status: str = "scored",
+    feedback_error: str = "",
 ) -> dict[str, Any]:
     return {
         "ts": datetime.now(timezone.utc).isoformat(),
         "score": score,
-        "passed": bool(score == 1),
+        "passed": (None if score is None else bool(score == 1)),
         "score_detail": detail,
         "submission": submission,
         "usage": usage,
         "steps": steps,
+        "feedback_status": feedback_status,
+        "feedback_error": feedback_error,
     }
 
 
@@ -226,6 +235,8 @@ def _session_instruction(env: str, instruction: str, workspace_root: str) -> str
         "python runtime_tools.py <tool> key=value ...\n"
         "For list fields, pass comma-separated values (example: grounding_refs=AGENTS.MD,notes.md).\n"
         "When task is complete, you MUST call report_completion exactly once.\n"
+        "After first successful report_completion, stop immediately and do not call more tools.\n"
+        "External evaluator feedback may be unavailable; still finish via report_completion once.\n"
         "Do not ask for confirmation. Keep actions minimal and task-focused.\n"
         f"Environment: {env}. Allowed tools: {tool_help}.\n"
         f"Workspace root for artifacts: {workspace_root}.\n\n"
@@ -657,6 +668,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
             steps=int(agent_result.get("steps", 0) or 0)
             if isinstance(agent_result, dict)
             else 0,
+            feedback_status="scored",
         )
         workspace.write_json(workspace.score_path, score_payload)
         workspace.append_jsonl(
@@ -666,6 +678,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
                 "ts": datetime.now(timezone.utc).isoformat(),
                 "score": float(result.score),
                 "score_detail": score_detail,
+                "feedback_status": "scored",
             },
         )
         _append_run_manifest(
@@ -680,6 +693,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
                 "workspace": str(workspace.root),
                 "score": float(result.score),
                 "passed": bool(result.score == 1),
+                "feedback_status": "scored",
             },
         )
         print(json.dumps(score_payload, ensure_ascii=True, indent=2))
@@ -692,14 +706,74 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
             "workspace": str(workspace.root),
         }
     except ConnectError as exc:
+        submission = (
+            agent_result.get("submission", {}) if isinstance(agent_result, dict) else {}
+        )
+        usage = agent_result.get("usage", {}) if isinstance(agent_result, dict) else {}
+        steps = (
+            int(agent_result.get("steps", 0) or 0)
+            if isinstance(agent_result, dict)
+            else 0
+        )
+        feedback_error = str(exc.message)
         workspace.append_jsonl(
             workspace.events_path,
             {
                 "event": "end_trial_error",
                 "ts": datetime.now(timezone.utc).isoformat(),
-                "error": str(exc.message),
+                "error": feedback_error,
             },
         )
+
+        if _feedback_optional():
+            score_payload = _score_payload(
+                score=None,
+                detail=[f"feedback unavailable: {feedback_error}"],
+                submission=submission,
+                usage=usage,
+                steps=steps,
+                feedback_status="unavailable",
+                feedback_error=feedback_error,
+            )
+            workspace.write_json(workspace.score_path, score_payload)
+            workspace.append_jsonl(
+                workspace.events_path,
+                {
+                    "event": "trial_finished_without_feedback",
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                    "feedback_error": feedback_error,
+                },
+            )
+            _append_run_manifest(
+                base_dir=NATIVE_RUNS_DIR,
+                local_run_id=local_run_id,
+                row={
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                    "local_run_id": local_run_id,
+                    "benchmark_id": BENCHMARK_ID,
+                    "task_id": task_id,
+                    "trial_id": trial.trial_id,
+                    "workspace": str(workspace.root),
+                    "score": None,
+                    "passed": None,
+                    "feedback_status": "unavailable",
+                    "feedback_error": feedback_error,
+                    "completion_status": "submitted",
+                },
+            )
+            print(
+                f"[{task_id}] EndTrial feedback unavailable (optional mode): {exc.code} {feedback_error}"
+            )
+            print(f"[{task_id}] Workspace: {workspace.root}")
+            return {
+                "task_id": task_id,
+                "ok": True,
+                "passed": None,
+                "score": None,
+                "feedback_status": "unavailable",
+                "workspace": str(workspace.root),
+            }
+
         _append_run_manifest(
             base_dir=NATIVE_RUNS_DIR,
             local_run_id=local_run_id,
@@ -710,15 +784,16 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
                 "task_id": task_id,
                 "trial_id": trial.trial_id,
                 "workspace": str(workspace.root),
-                "error": str(exc.message),
+                "error": feedback_error,
+                "feedback_status": "failed",
             },
         )
-        print(f"[{task_id}] EndTrial failed: {exc.code} {exc.message}")
+        print(f"[{task_id}] EndTrial failed: {exc.code} {feedback_error}")
         print(f"[{task_id}] Workspace: {workspace.root}")
         return {
             "task_id": task_id,
             "ok": False,
-            "error": str(exc.message),
+            "error": feedback_error,
             "workspace": str(workspace.root),
         }
 
