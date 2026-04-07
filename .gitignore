@@ -19,3 +19,9 @@ codex-agent-analytics/.venv/
 logs/
 codex-agent-native/runs/
 codex-agent-native/task-context-snapshots/
+
+# Analytics transient artifacts
+codex-agent-analytics/deploy/backups/
+codex-agent-analytics/tmp_apply_last_message.txt
+codex-agent-analytics/CODE_PROPOSALS.jsonl
+codex-agent-analytics/proposals/code/
