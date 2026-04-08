@@ -93,6 +93,8 @@ Environment:
 - `CODEX_MODEL` (default: `gpt-5.3-codex`)
 - `BENCHMARK_HOST` (default: `https://api.bitgn.com`)
 - `BENCHMARK_ID` (default: `bitgn/sandbox`)
+- `BITGN_API_KEY` (optional: enables leaderboard run flow `start_run/start_trial/submit_run`)
+- `BITGN_RUN_NAME` (optional: leaderboard run display name)
 
 Recommended key location per machine: `$HOME/.codex/omniroute-api-key` (`chmod 600`).
 

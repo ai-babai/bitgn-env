@@ -9,6 +9,7 @@ RUNLOG_HOME_DEFAULT="${RUNLOG_HOME:-$HOME/runlog-registry}"
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 BENCHMARK_ID="${BENCHMARK_ID:-bitgn/sandbox}"
 TIMEOUT_SEC="${CODEX_TIMEOUT_SEC:-240}"
+BITGN_API_KEY_FILE="${BITGN_API_KEY_FILE:-$HOME/.bitgn/bitgn-api-key}"
 
 SYNC=0
 ALL=0
@@ -37,6 +38,8 @@ Optional env overrides:
   OMNIROUTE_API_KEY
   CODEX_MODEL
   BENCHMARK_ID
+  BITGN_API_KEY
+  BITGN_RUN_NAME
   CODEX_TIMEOUT_SEC
 EOF
       exit 0
@@ -52,6 +55,10 @@ if ! bitgn_require_omniroute_key; then
   exit 1
 fi
 
+if [[ -z "${BITGN_API_KEY:-}" && -f "$BITGN_API_KEY_FILE" ]]; then
+  BITGN_API_KEY="$(tr -d '\r\n' < "$BITGN_API_KEY_FILE")"
+fi
+
 cd "$APP_DIR"
 
 if [[ $SYNC -eq 1 || ! -d ".venv" ]]; then
@@ -64,4 +71,4 @@ if [[ $ALL -eq 0 && ${#TASKS[@]} -gt 0 ]]; then
   CMD+=("${TASKS[@]}")
 fi
 
-RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" BENCHMARK_ID="$BENCHMARK_ID" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" "${CMD[@]}"
+RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" BENCHMARK_ID="$BENCHMARK_ID" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" "${CMD[@]}"

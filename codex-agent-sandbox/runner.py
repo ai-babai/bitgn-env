@@ -10,7 +10,16 @@ from pathlib import Path
 from typing import Any
 
 from bitgn.harness_connect import HarnessServiceClientSync
-from bitgn.harness_pb2 import EndTrialRequest, EvalPolicy, GetBenchmarkRequest, StartPlaygroundRequest, StatusRequest
+from bitgn.harness_pb2 import (
+    EndTrialRequest,
+    EvalPolicy,
+    GetBenchmarkRequest,
+    StartPlaygroundRequest,
+    StartRunRequest,
+    StartTrialRequest,
+    StatusRequest,
+    SubmitRunRequest,
+)
 from bitgn.vm.mini_connect import MiniRuntimeClientSync
 from bitgn.vm.mini_pb2 import AnswerRequest, DeleteRequest, ListRequest, OutlineRequest, ReadRequest, SearchRequest, WriteRequest
 from bitgn.vm.pcm_connect import PcmRuntimeClientSync
@@ -30,6 +39,8 @@ from bitgn.vm.pcm_pb2 import (
 )
 from connectrpc.errors import ConnectError
 from google.protobuf.json_format import MessageToDict
+from urllib import error as urlerror
+from urllib import request as urlrequest
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
@@ -42,6 +53,8 @@ BITGN_URL = os.getenv("BENCHMARK_HOST") or "https://api.bitgn.com"
 BENCHMARK_ID = os.getenv("BENCHMARK_ID") or "bitgn/sandbox"
 AGENT_ENV = (os.getenv("AGENT_ENV") or "").strip().lower()
 CODEX_MODEL = os.getenv("CODEX_MODEL") or "gpt-5.3-codex"
+BITGN_API_KEY = (os.getenv("BITGN_API_KEY") or "").strip()
+BITGN_RUN_NAME = (os.getenv("BITGN_RUN_NAME") or f"codex-sandbox {CODEX_MODEL}").strip()
 CODEX_TIMEOUT_SEC = int(os.getenv("CODEX_TIMEOUT_SEC") or 240)
 TASK_PARALLELISM = max(1, int(os.getenv("TASK_PARALLELISM") or 1))
 LOG_DIR = Path(os.getenv("BITGN_LOG_DIR") or (Path(__file__).resolve().parents[1] / "logs"))
@@ -163,6 +176,105 @@ def _tools_help_for_env(env: str) -> str:
             "- report_completion(answer, grounding_refs)",
         ]
     )
+
+
+def _prepare_leaderboard_trials(
+    *, client: HarnessServiceClientSync, benchmark_id: str, task_ids: list[str]
+) -> tuple[dict[str, dict[str, str]], str | None]:
+    if not BITGN_API_KEY:
+        return {}, None
+    ordered_task_ids = list(dict.fromkeys(task_ids))
+    requested = set(ordered_task_ids)
+    run_req = StartRunRequest(
+        benchmark_id=benchmark_id,
+        name=BITGN_RUN_NAME or f"codex-sandbox {CODEX_MODEL}",
+    )
+    if hasattr(run_req, "api_key"):
+        setattr(run_req, "api_key", BITGN_API_KEY)
+        run = client.start_run(run_req)
+        run_id = str(run.run_id)
+        trial_ids = [str(tid) for tid in run.trial_ids]
+    else:
+        run_id, trial_ids = _start_run_via_connect_json(
+            benchmark_id=benchmark_id,
+            name=BITGN_RUN_NAME or f"codex-sandbox {CODEX_MODEL}",
+            api_key=BITGN_API_KEY,
+        )
+        print(
+            "[LEADERBOARD] Using Connect JSON fallback for StartRun "
+            "(SDK has no api_key field).",
+            flush=True,
+        )
+
+    seeds: dict[str, dict[str, str]] = {}
+    for seeded_trial_id in trial_ids:
+        seeded = client.start_trial(StartTrialRequest(trial_id=seeded_trial_id))
+        task_id = str(seeded.task_id)
+        if requested and task_id not in requested:
+            continue
+        if task_id in seeds:
+            continue
+        seeds[task_id] = {
+            "trial_id": str(seeded.trial_id),
+            "task_id": task_id,
+            "instruction": str(seeded.instruction),
+            "harness_url": str(seeded.harness_url),
+        }
+        if len(seeds) == len(requested):
+            break
+    missing = [task_id for task_id in ordered_task_ids if task_id not in seeds]
+    if missing:
+        print(
+            "[LEADERBOARD] Could not prepare trials for tasks: "
+            + ", ".join(missing)
+            + ". Falling back to playground mode.",
+            flush=True,
+        )
+        try:
+            client.submit_run(SubmitRunRequest(run_id=run_id, force=True))
+        except ConnectError:
+            pass
+        return {}, None
+    print(
+        f"[LEADERBOARD] Prepared run_id={run_id} tasks={len(seeds)}",
+        flush=True,
+    )
+    return seeds, run_id
+
+
+def _start_run_via_connect_json(
+    *, benchmark_id: str, name: str, api_key: str
+) -> tuple[str, list[str]]:
+    endpoint = (
+        f"{BITGN_URL.rstrip('/')}/bitgn.harness.HarnessService/StartRun"
+    )
+    payload = {
+        "benchmarkId": benchmark_id,
+        "name": name,
+        "apiKey": api_key,
+    }
+    req = urlrequest.Request(
+        endpoint,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Connect-Protocol-Version": "1",
+        },
+        method="POST",
+    )
+    try:
+        with urlrequest.urlopen(req, timeout=30) as resp:
+            body = resp.read().decode("utf-8")
+    except urlerror.HTTPError as exc:
+        raise RuntimeError(
+            f"StartRun fallback failed: HTTP {exc.code}"
+        ) from exc
+    data = json.loads(body)
+    run_id = str(data.get("runId", "")).strip()
+    trial_ids = [str(x).strip() for x in data.get("trialIds", []) if str(x).strip()]
+    if not run_id or not trial_ids:
+        raise RuntimeError("StartRun fallback returned empty runId/trialIds")
+    return run_id, trial_ids
 
 
 def _load_active_prompt_pack() -> tuple[str, dict[str, Any]]:
@@ -1037,6 +1149,8 @@ def _run_single_task(
     env: str,
     benchmark_id: str,
     task: Any,
+    trial_seed: dict[str, str] | None = None,
+    leaderboard_run_id: str | None = None,
 ) -> dict[str, Any]:
     print(f"{'=' * 30} Starting task: {task.task_id} {'=' * 30}")
     logger.log("task_started", benchmark_id=benchmark_id, task_id=task.task_id)
@@ -1046,13 +1160,34 @@ def _run_single_task(
         raw_log_path=str(logger.path),
     )
 
-    trial = client.start_playground(StartPlaygroundRequest(benchmark_id=benchmark_id, task_id=task.task_id))
-    print(f"{CLI_BLUE}{trial.instruction}{CLI_CLR}\n{'-' * 80}")
+    if trial_seed is None:
+        trial = client.start_playground(
+            StartPlaygroundRequest(benchmark_id=benchmark_id, task_id=task.task_id)
+        )
+        trial_id = str(trial.trial_id)
+        trial_harness_url = str(trial.harness_url)
+        trial_instruction = str(trial.instruction)
+    else:
+        trial_id = str(trial_seed.get("trial_id", ""))
+        trial_harness_url = str(trial_seed.get("harness_url", ""))
+        trial_instruction = str(trial_seed.get("instruction", ""))
+        if not trial_id or not trial_harness_url:
+            raise RuntimeError(
+                f"Prepared trial seed is invalid for task {task.task_id}: {trial_seed}"
+            )
+        print(
+            f"[LEADERBOARD] Using prepared trial {trial_id} for {task.task_id}",
+            flush=True,
+        )
+
+    print(f"{CLI_BLUE}{trial_instruction}{CLI_CLR}\n{'-' * 80}")
     logger.log(
         "task_instruction",
         benchmark_id=benchmark_id,
         task_id=task.task_id,
-        instruction=trial.instruction,
+        instruction=trial_instruction,
+        leaderboard_run_id=leaderboard_run_id,
+        trial_id=trial_id,
     )
 
     submission: dict[str, object] | None = None
@@ -1068,8 +1203,8 @@ def _run_single_task(
             env=env,
             bridge=bridge,
             prompt_pack=prompt_pack,
-            trial_harness_url=trial.harness_url,
-            task_text=trial.instruction,
+            trial_harness_url=trial_harness_url,
+            task_text=trial_instruction,
             logger=logger,
             benchmark_id=benchmark_id,
             task_id=task.task_id,
@@ -1090,7 +1225,7 @@ def _run_single_task(
         logger.log("agent_error", benchmark_id=benchmark_id, task_id=task.task_id, error=str(exc))
 
     try:
-        result = client.end_trial(EndTrialRequest(trial_id=trial.trial_id))
+        result = client.end_trial(EndTrialRequest(trial_id=trial_id))
     except ConnectError as exc:
         logger.log(
             "agent_error",
@@ -1098,6 +1233,8 @@ def _run_single_task(
             task_id=task.task_id,
             phase="end_trial",
             error=str(exc.message),
+            trial_id=trial_id,
+            leaderboard_run_id=leaderboard_run_id,
         )
         print(f"{CLI_RED}EndTrial failed: {exc.code} {exc.message}{CLI_CLR}")
         return {
@@ -1110,6 +1247,8 @@ def _run_single_task(
             "submission": submission,
             "metrics": metrics,
             "task_run_id": task_run_id,
+            "trial_id": trial_id,
+            "leaderboard_run_id": leaderboard_run_id,
         }
 
     if result.score >= 0:
@@ -1136,6 +1275,8 @@ def _run_single_task(
             score_detail=list(result.score_detail),
             expected=expected,
             submission=submission,
+            trial_id=trial_id,
+            leaderboard_run_id=leaderboard_run_id,
         )
         return {
             "task_id": task.task_id,
@@ -1147,6 +1288,8 @@ def _run_single_task(
             "submission": submission,
             "metrics": metrics,
             "task_run_id": task_run_id,
+            "trial_id": trial_id,
+            "leaderboard_run_id": leaderboard_run_id,
         }
 
     return {
@@ -1159,6 +1302,8 @@ def _run_single_task(
         "submission": submission,
         "metrics": metrics,
         "task_run_id": task_run_id,
+        "trial_id": trial_id,
+        "leaderboard_run_id": leaderboard_run_id,
     }
 
 
@@ -1195,6 +1340,9 @@ def main() -> None:
     tasks_passed = 0
     tasks_failed = 0
 
+    leaderboard_trials: dict[str, dict[str, str]] = {}
+    leaderboard_run_id: str | None = None
+
     scores: list[tuple[str, float]] = []
     bridge = CodexBridge(
         model=CODEX_MODEL,
@@ -1210,6 +1358,13 @@ def main() -> None:
         tasks_to_run = [task for task in res.tasks if not task_filter or task.task_id in task_filter]
         tasks_planned = len(tasks_to_run)
 
+        if BITGN_API_KEY and tasks_to_run:
+            leaderboard_trials, leaderboard_run_id = _prepare_leaderboard_trials(
+                client=client,
+                benchmark_id=BENCHMARK_ID,
+                task_ids=[str(task.task_id) for task in tasks_to_run],
+            )
+
         print(f"TASK PARALLELISM: {TASK_PARALLELISM}")
         if TASK_PARALLELISM <= 1 or len(tasks_to_run) <= 1:
             for task in tasks_to_run:
@@ -1223,6 +1378,8 @@ def main() -> None:
                     env=env,
                     benchmark_id=BENCHMARK_ID,
                     task=task,
+                    trial_seed=leaderboard_trials.get(str(task.task_id)),
+                    leaderboard_run_id=leaderboard_run_id,
                 )
                 task_run_id = str(task_result.get("task_run_id"))
                 status = str(task_result.get("status", "ok"))
@@ -1275,6 +1432,8 @@ def main() -> None:
                         env=env,
                         benchmark_id=BENCHMARK_ID,
                         task=task,
+                        trial_seed=leaderboard_trials.get(str(task.task_id)),
+                        leaderboard_run_id=leaderboard_run_id,
                     )
                     for task in tasks_to_run
                 ]
@@ -1316,6 +1475,15 @@ def main() -> None:
                         tasks_passed += 1
                     else:
                         tasks_failed += 1
+
+        if leaderboard_run_id:
+            client.submit_run(SubmitRunRequest(run_id=leaderboard_run_id, force=True))
+            logger.log(
+                "leaderboard_run_submitted",
+                benchmark_id=BENCHMARK_ID,
+                run_id=leaderboard_run_id,
+            )
+            print(f"[LEADERBOARD] submitted run_id={leaderboard_run_id}")
     except ConnectError as exc:
         print(f"{exc.code}: {exc.message}")
         logger.log("run_error", benchmark_id=BENCHMARK_ID, error=str(exc.message), code=str(exc.code))

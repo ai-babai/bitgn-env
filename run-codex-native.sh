@@ -8,6 +8,7 @@ RUNLOG_HOME_DEFAULT="${RUNLOG_HOME:-$HOME/runlog-registry}"
 
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 TIMEOUT_SEC="${CODEX_TIMEOUT_SEC:-240}"
+BITGN_API_KEY_FILE="${BITGN_API_KEY_FILE:-$HOME/.bitgn/bitgn-api-key}"
 ENV_ID="sandbox"
 PARALLELISM=""
 
@@ -56,6 +57,10 @@ if ! bitgn_require_omniroute_key; then
   exit 1
 fi
 
+if [[ -z "${BITGN_API_KEY:-}" && -f "$BITGN_API_KEY_FILE" ]]; then
+  BITGN_API_KEY="$(tr -d '\r\n' < "$BITGN_API_KEY_FILE")"
+fi
+
 if [[ "$ENV_ID" == "pac1" ]]; then
   export BENCHMARK_ID="${BENCHMARK_ID:-bitgn/pac1-dev}"
   export AGENT_ENV="pac1"
@@ -71,4 +76,4 @@ if [[ -n "$PARALLELISM" ]]; then
   RUN_ARGS+=("--parallelism" "$PARALLELISM")
 fi
 
-RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python runner.py "${RUN_ARGS[@]}"
+RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" uv run python runner.py "${RUN_ARGS[@]}"

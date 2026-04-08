@@ -8,6 +8,7 @@ RUNLOG_HOME_DEFAULT="${RUNLOG_HOME:-$HOME/runlog-registry}"
 
 MODEL="${CODEX_MODEL:-gpt-5.3-codex}"
 TIMEOUT_SEC="${CODEX_TIMEOUT_SEC:-240}"
+BITGN_API_KEY_FILE="${BITGN_API_KEY_FILE:-$HOME/.bitgn/bitgn-api-key}"
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: ./run-codex-evolve.sh <solve|analyze|propose-prompts|propose-code|apply-prompts|full-step|autopilot> [args...]" >&2
@@ -53,10 +54,14 @@ if [[ "$MODE" == "solve" || "$MODE" == "full-step" || "$MODE" == "autopilot" ]];
   fi
 fi
 
+if [[ -z "${BITGN_API_KEY:-}" && -f "$BITGN_API_KEY_FILE" ]]; then
+  BITGN_API_KEY="$(tr -d '\r\n' < "$BITGN_API_KEY_FILE")"
+fi
+
 cd "$APP_DIR"
 
 if [[ -n "${OMNIROUTE_API_KEY:-}" ]]; then
-  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python evolve.py "$MODE" "$@"
+  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" uv run python evolve.py "$MODE" "$@"
 else
-  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" uv run python evolve.py "$MODE" "$@"
+  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" uv run python evolve.py "$MODE" "$@"
 fi

@@ -20,26 +20,29 @@ from bitgn.harness_pb2 import (
     EndTrialRequest,
     EvalPolicy,
     GetBenchmarkRequest,
+    StartRunRequest,
     StartPlaygroundRequest,
+    StartTrialRequest,
     StatusRequest,
+    SubmitRunRequest,
 )
 from bitgn.vm.mini_pb2 import ReadRequest
 from bitgn.vm.pcm_pb2 import ReadRequest as PcmReadRequest
 from connectrpc.errors import ConnectError
 from google.protobuf.json_format import MessageToDict
+from urllib import error as urlerror
+from urllib import request as urlrequest
 
 from tool_gateway import ToolGateway
-from harness_seed import (
-    copy_local_harness_into_workspace,
-    render_local_rules_prompt,
-    validate_local_harness,
-)
+import harness_seed
 from workspace import create_task_workspace
 
 BITGN_URL = os.getenv("BENCHMARK_HOST") or "https://api.bitgn.com"
 BENCHMARK_ID = os.getenv("BENCHMARK_ID") or "bitgn/sandbox"
 AGENT_ENV = (os.getenv("AGENT_ENV") or "").strip().lower()
 CODEX_MODEL = os.getenv("CODEX_MODEL") or "gpt-5.3-codex"
+BITGN_API_KEY = (os.getenv("BITGN_API_KEY") or "").strip()
+BITGN_RUN_NAME = (os.getenv("BITGN_RUN_NAME") or f"codex-native {CODEX_MODEL}").strip()
 NATIVE_SESSION_TIMEOUT_SEC = int(os.getenv("NATIVE_SESSION_TIMEOUT_SEC") or 420)
 NATIVE_RUNS_DIR = os.getenv("NATIVE_RUNS_DIR") or str(
     Path(__file__).resolve().parent / "runs"
@@ -52,6 +55,100 @@ MANIFEST_LOCK = threading.Lock()
 
 def _feedback_optional() -> bool:
     return BITGN_FEEDBACK_MODE in {"optional", "best_effort", "soft"}
+
+
+def _prepare_leaderboard_trials(
+    *, client: HarnessServiceClientSync, task_ids: list[str]
+) -> tuple[dict[str, dict[str, str]], str | None]:
+    if not BITGN_API_KEY:
+        return {}, None
+    ordered_task_ids = list(dict.fromkeys(task_ids))
+    requested = set(ordered_task_ids)
+    run_req = StartRunRequest(
+        benchmark_id=BENCHMARK_ID,
+        name=BITGN_RUN_NAME or f"codex-native {CODEX_MODEL}",
+    )
+    if hasattr(run_req, "api_key"):
+        setattr(run_req, "api_key", BITGN_API_KEY)
+        run = client.start_run(run_req)
+        run_id = str(run.run_id)
+        trial_ids = [str(tid) for tid in run.trial_ids]
+    else:
+        run_id, trial_ids = _start_run_via_connect_json(
+            benchmark_id=BENCHMARK_ID,
+            name=BITGN_RUN_NAME or f"codex-native {CODEX_MODEL}",
+            api_key=BITGN_API_KEY,
+        )
+        _cli(
+            "[LEADERBOARD] Using Connect JSON fallback for StartRun "
+            "(SDK has no api_key field)."
+        )
+
+    seeds: dict[str, dict[str, str]] = {}
+    for trial_id in trial_ids:
+        trial = client.start_trial(StartTrialRequest(trial_id=trial_id))
+        task_id = str(trial.task_id)
+        if requested and task_id not in requested:
+            continue
+        if task_id in seeds:
+            continue
+        seeds[task_id] = {
+            "trial_id": str(trial.trial_id),
+            "task_id": task_id,
+            "instruction": str(trial.instruction),
+            "harness_url": str(trial.harness_url),
+        }
+        if len(seeds) == len(requested):
+            break
+    missing = [task_id for task_id in ordered_task_ids if task_id not in seeds]
+    if missing:
+        _cli(
+            "[LEADERBOARD] Could not prepare trials for tasks: "
+            + ", ".join(missing)
+            + ". Falling back to playground mode."
+        )
+        try:
+            client.submit_run(SubmitRunRequest(run_id=run_id, force=True))
+        except ConnectError:
+            pass
+        return {}, None
+    _cli(f"[LEADERBOARD] Prepared run_id={run_id} tasks={len(seeds)}")
+    return seeds, run_id
+
+
+def _start_run_via_connect_json(
+    *, benchmark_id: str, name: str, api_key: str
+) -> tuple[str, list[str]]:
+    endpoint = (
+        f"{BITGN_URL.rstrip('/')}/bitgn.harness.HarnessService/StartRun"
+    )
+    payload = {
+        "benchmarkId": benchmark_id,
+        "name": name,
+        "apiKey": api_key,
+    }
+    req = urlrequest.Request(
+        endpoint,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Connect-Protocol-Version": "1",
+        },
+        method="POST",
+    )
+    try:
+        with urlrequest.urlopen(req, timeout=30) as resp:
+            body = resp.read().decode("utf-8")
+    except urlerror.HTTPError as exc:
+        raise RuntimeError(
+            f"StartRun fallback failed: HTTP {exc.code}"
+        ) from exc
+    data = json.loads(body)
+    run_id = str(data.get("runId", "")).strip()
+    trial_ids = [str(x).strip() for x in data.get("trialIds", []) if str(x).strip()]
+    if not run_id or not trial_ids:
+        raise RuntimeError("StartRun fallback returned empty runId/trialIds")
+    return run_id, trial_ids
 
 
 def _cli(msg: str) -> None:
@@ -222,7 +319,7 @@ def _session_instruction(env: str, instruction: str, workspace_root: str) -> str
         if env == "pac1"
         else "tree/search/list/read/write/delete/report_completion"
     )
-    local_rules_agents = render_local_rules_prompt()
+    local_rules_agents = harness_seed.render_local_rules_prompt()
     return (
         "You are an autonomous BitGN task agent.\n"
         "Default rules are from local-rules AGENTS content embedded below.\n"
@@ -402,7 +499,7 @@ def _hydrate_initial_workspace_files(
 ) -> None:
     files_root = Path(workspace_root) / "initial_files"
     files_root.mkdir(parents=True, exist_ok=True)
-    copy_local_harness_into_workspace(target_dir=files_root)
+    harness_seed.copy_local_harness_into_workspace(target_dir=files_root)
 
     def save_text(rel_path: str, content: str) -> None:
         clean = rel_path.strip().replace("\\", "/").lstrip("/")
@@ -464,7 +561,14 @@ def _hydrate_initial_workspace_files(
             pass
 
 
-def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, Any]:
+def _run_single_task(
+    *,
+    env: str,
+    task_id: str,
+    local_run_id: str,
+    trial_seed: dict[str, str] | None = None,
+    leaderboard_run_id: str | None = None,
+) -> dict[str, Any]:
 
     _stage(
         "TASK_START",
@@ -472,16 +576,29 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
         task_id=task_id,
     )
     client = HarnessServiceClientSync(BITGN_URL)
-    _cli(f"[{task_id}] Connecting to BitGN {client.status(StatusRequest())}")
-    benchmark = client.get_benchmark(GetBenchmarkRequest(benchmark_id=BENCHMARK_ID))
-    _cli(
-        f"[{task_id}] {EvalPolicy.Name(benchmark.policy)} benchmark: {benchmark.benchmark_id}"
-    )
+    if trial_seed is None:
+        _cli(f"[{task_id}] Connecting to BitGN {client.status(StatusRequest())}")
+        benchmark = client.get_benchmark(GetBenchmarkRequest(benchmark_id=BENCHMARK_ID))
+        _cli(
+            f"[{task_id}] {EvalPolicy.Name(benchmark.policy)} benchmark: {benchmark.benchmark_id}"
+        )
+        trial = client.start_playground(
+            StartPlaygroundRequest(benchmark_id=BENCHMARK_ID, task_id=task_id)
+        )
+        trial_id = str(trial.trial_id)
+        harness_url = str(trial.harness_url)
+        instruction = str(trial.instruction)
+    else:
+        trial_id = str(trial_seed.get("trial_id", ""))
+        harness_url = str(trial_seed.get("harness_url", ""))
+        instruction = str(trial_seed.get("instruction", ""))
+        if not trial_id or not harness_url:
+            raise RuntimeError(
+                f"Prepared trial seed is invalid for task {task_id}: {trial_seed}"
+            )
+        _cli(f"[{task_id}] Using prepared leaderboard trial {trial_id}")
 
-    trial = client.start_playground(
-        StartPlaygroundRequest(benchmark_id=BENCHMARK_ID, task_id=task_id)
-    )
-    _cli(f"[{task_id}] Task {task_id}: {trial.instruction}")
+    _cli(f"[{task_id}] Task {task_id}: {instruction}")
 
     workspace = create_task_workspace(
         base_dir=NATIVE_RUNS_DIR,
@@ -491,7 +608,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
         model=CODEX_MODEL,
         local_run_id=local_run_id,
     )
-    workspace.instruction_path.write_text(trial.instruction + "\n", encoding="utf-8")
+    workspace.instruction_path.write_text(instruction + "\n", encoding="utf-8")
     _stage("WORKSPACE_READY", str(workspace.root), task_id=task_id)
     workspace.append_jsonl(
         workspace.events_path,
@@ -507,7 +624,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
     )
 
     gateway = ToolGateway(
-        env=env, harness_url=trial.harness_url, workspace=workspace, task_id=task_id
+        env=env, harness_url=harness_url, workspace=workspace, task_id=task_id
     )
     workspace.write_json(
         workspace.context_path,
@@ -516,13 +633,13 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
             "task_id": task_id,
             "local_run_id": local_run_id,
             "benchmark_id": BENCHMARK_ID,
-            "harness_url": trial.harness_url,
+            "harness_url": harness_url,
             "workspace_root": str(workspace.root),
         },
     )
     files_root = Path(workspace.root) / "initial_files"
     _stage("LOCAL_RULES_SNAPSHOT", task_id=task_id)
-    copied = copy_local_harness_into_workspace(target_dir=files_root)
+    copied = harness_seed.copy_local_harness_into_workspace(target_dir=files_root)
     workspace.append_jsonl(
         workspace.events_path,
         {
@@ -544,7 +661,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
         if not has_snapshot:
             snapshot_root.mkdir(parents=True, exist_ok=True)
             (snapshot_root / "TASK_INSTRUCTION.md").write_text(
-                trial.instruction.strip() + "\n", encoding="utf-8"
+                instruction.strip() + "\n", encoding="utf-8"
             )
         workspace.append_jsonl(
             workspace.events_path,
@@ -568,7 +685,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
     try:
         session_result = _run_codex_session(
             env=env,
-            instruction=trial.instruction,
+            instruction=instruction,
             workspace_root=str(workspace.root),
             workspace=workspace,
             task_id=task_id,
@@ -640,9 +757,10 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
                 "local_run_id": local_run_id,
                 "benchmark_id": BENCHMARK_ID,
                 "task_id": task_id,
-                "trial_id": trial.trial_id,
+                "trial_id": trial_id,
                 "workspace": str(workspace.root),
                 "error": str(exc),
+                "leaderboard_run_id": leaderboard_run_id,
             },
         )
         return {
@@ -654,7 +772,7 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
 
     try:
         _stage("TRIAL_FINISH", task_id=task_id)
-        result = client.end_trial(EndTrialRequest(trial_id=trial.trial_id))
+        result = client.end_trial(EndTrialRequest(trial_id=trial_id))
         score_detail = list(result.score_detail)
         score_payload = _score_payload(
             score=float(result.score),
@@ -689,11 +807,12 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
                 "local_run_id": local_run_id,
                 "benchmark_id": BENCHMARK_ID,
                 "task_id": task_id,
-                "trial_id": trial.trial_id,
+                "trial_id": trial_id,
                 "workspace": str(workspace.root),
                 "score": float(result.score),
                 "passed": bool(result.score == 1),
                 "feedback_status": "scored",
+                "leaderboard_run_id": leaderboard_run_id,
             },
         )
         print(json.dumps(score_payload, ensure_ascii=True, indent=2))
@@ -752,13 +871,14 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
                     "local_run_id": local_run_id,
                     "benchmark_id": BENCHMARK_ID,
                     "task_id": task_id,
-                    "trial_id": trial.trial_id,
+                    "trial_id": trial_id,
                     "workspace": str(workspace.root),
                     "score": None,
                     "passed": None,
                     "feedback_status": "unavailable",
                     "feedback_error": feedback_error,
                     "completion_status": "submitted",
+                    "leaderboard_run_id": leaderboard_run_id,
                 },
             )
             print(
@@ -782,10 +902,11 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
                 "local_run_id": local_run_id,
                 "benchmark_id": BENCHMARK_ID,
                 "task_id": task_id,
-                "trial_id": trial.trial_id,
+                "trial_id": trial_id,
                 "workspace": str(workspace.root),
                 "error": feedback_error,
                 "feedback_status": "failed",
+                "leaderboard_run_id": leaderboard_run_id,
             },
         )
         print(f"[{task_id}] EndTrial failed: {exc.code} {feedback_error}")
@@ -801,7 +922,28 @@ def _run_single_task(*, env: str, task_id: str, local_run_id: str) -> dict[str, 
 def main() -> None:
     task_filter, parallelism = _parse_cli(sys.argv[1:])
     env = detect_env()
-    validate_local_harness()
+    harness_seed.validate_local_harness()
+
+    leaderboard_trials: dict[str, dict[str, str]] = {}
+    leaderboard_run_id: str | None = None
+    if BITGN_API_KEY:
+        try:
+            prep_client = HarnessServiceClientSync(BITGN_URL)
+            _cli(f"[LEADERBOARD] Preparing run against {BITGN_URL}")
+            leaderboard_trials, leaderboard_run_id = _prepare_leaderboard_trials(
+                client=prep_client,
+                task_ids=task_filter,
+            )
+        except ConnectError as exc:
+            _cli(
+                f"[LEADERBOARD] Failed to start leaderboard run ({exc.code}: {exc.message}). "
+                "Falling back to playground mode."
+            )
+        except Exception as exc:
+            _cli(
+                "[LEADERBOARD] Failed to prepare leaderboard run "
+                f"({exc}). Falling back to playground mode."
+            )
 
     local_run_id = _resolve_local_run_id()
     _stage(
@@ -813,7 +955,13 @@ def main() -> None:
     if parallelism <= 1 or len(task_filter) <= 1:
         for task_id in task_filter:
             results.append(
-                _run_single_task(env=env, task_id=task_id, local_run_id=local_run_id)
+                _run_single_task(
+                    env=env,
+                    task_id=task_id,
+                    local_run_id=local_run_id,
+                    trial_seed=leaderboard_trials.get(task_id),
+                    leaderboard_run_id=leaderboard_run_id,
+                )
             )
     else:
         max_workers = min(parallelism, len(task_filter))
@@ -824,11 +972,27 @@ def main() -> None:
                     env=env,
                     task_id=task_id,
                     local_run_id=local_run_id,
+                    trial_seed=leaderboard_trials.get(task_id),
+                    leaderboard_run_id=leaderboard_run_id,
                 )
                 for task_id in task_filter
             ]
             for fut in as_completed(futures):
                 results.append(fut.result())
+
+    if leaderboard_run_id:
+        try:
+            submit_client = HarnessServiceClientSync(BITGN_URL)
+            submit_client.submit_run(
+                SubmitRunRequest(run_id=leaderboard_run_id, force=True)
+            )
+            _stage("LEADERBOARD_SUBMIT", f"run_id={leaderboard_run_id}")
+        except ConnectError as exc:
+            _cli(
+                f"[LEADERBOARD] Submit failed for run {leaderboard_run_id}: "
+                f"{exc.code} {exc.message}"
+            )
+            raise SystemExit(2) from exc
 
     total = len(results)
     passed = sum(1 for r in results if bool(r.get("passed", False)))

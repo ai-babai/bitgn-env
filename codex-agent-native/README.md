@@ -116,6 +116,8 @@ uv run python snapshot_task_context.py t03 --env pac1
 - `CODEX_MODEL` (по умолчанию `gpt-5.3-codex`)
 - `BENCHMARK_HOST` (по умолчанию `https://api.bitgn.com`)
 - `BENCHMARK_ID` (`bitgn/sandbox` или `bitgn/pac1-dev`)
+- `BITGN_API_KEY` (опционально: включает leaderboard run flow `start_run/start_trial/submit_run`)
+- `BITGN_RUN_NAME` (опционально: имя leaderboard run)
 - `AGENT_ENV` (`sandbox` или `pac1`)
 - `NATIVE_SESSION_TIMEOUT_SEC` (по умолчанию `420`)
 - `NATIVE_RUNS_DIR` (база для task workspaces)
