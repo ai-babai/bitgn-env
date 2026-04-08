@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-08T19:12:25.391845+00:00",
+  "local_run_id": "local_run_20260408T184700Z_101159",
+  "model": "gpt-5.3-codex",
+  "parallelism": 1,
+  "task_count": 1,
+  "rules_version": "rv0038",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t36",
+    "affected_tasks": [
+      "t36"
+    ],
+    "problem": "Task t36 fails with fail_group=one_short_token. The task logic and mutations were correct, but scoring failed because `grounding_refs` omitted `accounts/acct_004.json`. Tool traces show the file was explicitly read for sender/account authorization before writing outbox artifacts, so provenance coverage was incomplete at `report_completion`. This is a completion-checklist gap, not a runtime/tool failure.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t36",
+      "status": "fail",
+      "fail_group": "one_short_token",
+      "diagnosis": "The task logic and mutations were correct, but scoring failed because `grounding_refs` omitted `accounts/acct_004.json`. Tool traces show the file was explicitly read for sender/account authorization before writing outbox artifacts, so provenance coverage was incomplete at `report_completion`. This is a completion-checklist gap, not a runtime/tool failure.",
+      "focus": {
+        "primary_task_id": "t36",
+        "problem": "Authorization-sensitive inbox runs can read account evidence during verification but still submit incomplete `grounding_refs`, causing otherwise-correct outputs to fail scoring.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t36"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "All required tools behaved correctly (`read`, `write`, `report_completion`); the miss is policy salience at finalization time and is addressable with a small rules-level pre-submit gate.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Grounding Reference Closure Gate Before Completion",
+        "hypothesis": "If `grounding_refs` are reconciled against all decisive evidence files used for authorization/entity validation before `report_completion`, reference-omission failures will drop without changing runtime code.",
+        "change": "Add a short pre-`report_completion` closure rule in completion guidance: when outcome/message depends on sender-contact-account verification (or other authorization/identity checks), include every decisive source file used in that decision chain in `grounding_refs` (for example contact identity file and linked account record), not only message/output artifacts. Require a final refs-audit step that compares planned `grounding_refs` to files actually read for decision-critical checks.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0038/AGENTS.md",
+            "change_summary": "Add 6-10 lines in Completion-contract clarifying that decision-critical authorization evidence files must be included in `grounding_refs`, plus a final refs-audit step before `report_completion`."
+          }
+        ],
+        "rollback": "Remove the added refs-closure bullets from `rules_versions/rv0038/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The proposal is workflow-level (decision-evidence provenance closure), avoids task-specific IDs/literals, and applies across inbox and other authorization-filtered tasks."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0038/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0038/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "lidation before `report_completion`, reference-omission failures will drop without changing runtime code.\",\n    \"change\": \"Add a short pre-`report_completion` closure rule in completion guidance: when outcome/message depends on sender-contact-account verification (or other authorization/identity checks), include every decisive source file used in that decision chain in `grounding_refs` (for example contact identity file and linked account record), not only message/output artifacts. Require a final refs-audit step that compares planned `grounding_refs` to files actually read for decision-critical checks.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0038/AGENTS.md\",\n        \"change_summary\": \"Add 6-10 lines in Completion-contract clarifying that decision-critical authorization evidence files must be included in `grounding_refs`, plus a final refs-audit step before `report_completion`.\"\n      }\n    ],\n    \"rollback\": \"Remove the added refs-closure bullets from `rules_versions/rv0038/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is workflow-level (decision-evidence provenance closure), avoids task-specific IDs/literals, and applies across inbox and other authorization-filtered tasks.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0038/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0038/AGENTS.md\",\n      \"reason\": \"Path is in the rules whitelist and matches active version `rv0038` per target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "ort_completion`, reference-omission failures will drop without changing runtime code.\",\n    \"change\": \"Add a short pre-`report_completion` closure rule in completion guidance: when outcome/message depends on sender-contact-account verification (or other authorization/identity checks), include every decisive source file used in that decision chain in `grounding_refs` (for example contact identity file and linked account record), not only message/output artifacts. Require a final refs-audit step that compares planned `grounding_refs` to files actually read for decision-critical checks.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0038/AGENTS.md\",\n        \"change_summary\": \"Add 6-10 lines in Completion-contract clarifying that decision-critical authorization evidence files must be included in `grounding_refs`, plus a final refs-audit step before `report_completion`.\"\n      }\n    ],\n    \"rollback\": \"Remove the added refs-closure bullets from `rules_versions/rv0038/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The proposal is workflow-level (decision-evidence provenance closure), avoids task-specific IDs/literals, and applies across inbox and other authorization-filtered tasks.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0038/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0038/AGENTS.md\",\n      \"reason\": \"Path is in the rules whitelist and matches active version `rv0038` per target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\ntokens used\n239,029\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260408T184700Z_101159/t36/attempt_20260408T185924Z_f2cccf",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-08T13:44:00.447895+00:00",
+  "local_run_id": "local_run_20260408T133900Z_4041991",
+  "model": "gpt-5.3-codex",
+  "parallelism": 1,
+  "task_count": 1,
+  "rules_version": "rv0032",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t43",
+    "affected_tasks": [
+      "t43"
+    ],
+    "problem": "Task t43 fails with fail_group=outcome_selection. The run correctly computed the relative date and searched captures, but when no exact match was found it still returned `OUTCOME_OK` with nearby items. Scoring evidence shows an explicit outcome mismatch: expected `OUTCOME_NONE_CLARIFICATION`, got `OUTCOME_OK`. This is a completion-outcome policy miss, not a runtime/tooling blocker.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t43",
+      "status": "fail",
+      "fail_group": "outcome_selection",
+      "diagnosis": "The run correctly computed the relative date and searched captures, but when no exact match was found it still returned `OUTCOME_OK` with nearby items. Scoring evidence shows an explicit outcome mismatch: expected `OUTCOME_NONE_CLARIFICATION`, got `OUTCOME_OK`. This is a completion-outcome policy miss, not a runtime/tooling blocker.",
+      "focus": {
+        "primary_task_id": "t43",
+        "problem": "When a question presupposes a single captured item but retrieval yields no exact match, the agent reports a definitive OK answer instead of requesting clarification.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t43"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Tooling worked and produced enough evidence for decision-making; failure came from outcome-choice policy at completion time, so a harness/rules adjustment is sufficient.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Clarification Gate For Presupposed-Singular Lookups",
+        "hypothesis": "If completion rules require `OUTCOME_NONE_CLARIFICATION` whenever a singular lookup question has zero or multiple exact matches, agents will avoid false-final `OUTCOME_OK` responses on unresolved retrievals.",
+        "change": "Add a compact outcome-selection rule in AGENTS completion guidance: for user prompts that imply exactly one target record (for example, \"which X\"), first verify cardinality of exact matches. If exact-match count is not exactly one, do not finalize as `OUTCOME_OK`; return `OUTCOME_NONE_CLARIFICATION` with a minimal clarification question (or explicit confirmation request) instead of substituting nearest results.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+            "change_summary": "Add 5-9 lines in completion/outcome section defining a singular-lookup cardinality gate and mapping non-singleton results to clarification outcome."
+          }
+        ],
+        "rollback": "Remove the added singular-lookup clarification gate block from `rules_versions/rv0032/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is cardinality-based and outcome-policy focused, with no task ids, fixed dates, or repository-specific literals."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0032/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "pothesis\": \"If completion rules require `OUTCOME_NONE_CLARIFICATION` whenever a singular lookup question has zero or multiple exact matches, agents will avoid false-final `OUTCOME_OK` responses on unresolved retrievals.\",\n    \"change\": \"Add a compact outcome-selection rule in AGENTS completion guidance: for user prompts that imply exactly one target record (for example, \\\"which X\\\"), first verify cardinality of exact matches. If exact-match count is not exactly one, do not finalize as `OUTCOME_OK`; return `OUTCOME_NONE_CLARIFICATION` with a minimal clarification question (or explicit confirmation request) instead of substituting nearest results.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n        \"change_summary\": \"Add 5-9 lines in completion/outcome section defining a singular-lookup cardinality gate and mapping non-singleton results to clarification outcome.\"\n      }\n    ],\n    \"rollback\": \"Remove the added singular-lookup clarification gate block from `rules_versions/rv0032/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is cardinality-based and outcome-policy focused, with no task ids, fixed dates, or repository-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"reason\": \"Normalized `<active>` via `rules_versions/active_version.txt` (`rv0032`); final path is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "etion rules require `OUTCOME_NONE_CLARIFICATION` whenever a singular lookup question has zero or multiple exact matches, agents will avoid false-final `OUTCOME_OK` responses on unresolved retrievals.\",\n    \"change\": \"Add a compact outcome-selection rule in AGENTS completion guidance: for user prompts that imply exactly one target record (for example, \\\"which X\\\"), first verify cardinality of exact matches. If exact-match count is not exactly one, do not finalize as `OUTCOME_OK`; return `OUTCOME_NONE_CLARIFICATION` with a minimal clarification question (or explicit confirmation request) instead of substituting nearest results.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n        \"change_summary\": \"Add 5-9 lines in completion/outcome section defining a singular-lookup cardinality gate and mapping non-singleton results to clarification outcome.\"\n      }\n    ],\n    \"rollback\": \"Remove the added singular-lookup clarification gate block from `rules_versions/rv0032/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is cardinality-based and outcome-policy focused, with no task ids, fixed dates, or repository-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0032/AGENTS.md\",\n      \"reason\": \"Normalized `<active>` via `rules_versions/active_version.txt` (`rv0032`); final path is whitelisted by target-path policy.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\ntokens used\n143,838\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260408T133900Z_4041991/t43/attempt_20260408T133900Z_38580d",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-08T14:45:16.634282+00:00",
+  "local_run_id": "local_run_20260408T143501Z_4083868",
+  "model": "gpt-5.3-codex",
+  "parallelism": 1,
+  "task_count": 1,
+  "rules_version": "rv0035",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t21",
+    "affected_tasks": [
+      "t21"
+    ],
+    "problem": "Task t21 fails with fail_group=outcome_selection. The run read conflicting mandatory completion directives for the same artifact (`docs/task-completion.md` says write `DONE` to `result.txt`, while `docs/automation.md` says `FINISHED`) and still reported `OUTCOME_OK`. Scoring expected `OUTCOME_NONE_CLARIFICATION`, which matches prior passing t21 behavior that asks for precedence before finalizing.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t21",
+      "status": "fail",
+      "fail_group": "outcome_selection",
+      "diagnosis": "The run read conflicting mandatory completion directives for the same artifact (`docs/task-completion.md` says write `DONE` to `result.txt`, while `docs/automation.md` says `FINISHED`) and still reported `OUTCOME_OK`. Scoring expected `OUTCOME_NONE_CLARIFICATION`, which matches prior passing t21 behavior that asks for precedence before finalizing.",
+      "focus": {
+        "primary_task_id": "t21",
+        "problem": "Outcome selection missed a mandatory-policy conflict gate: when trusted docs give incompatible literal completion requirements for the same target, the agent still finalized with `OUTCOME_OK` instead of requesting precedence clarification.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t21"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Runtime/tools executed correctly; failure is policy interpretation and completion-outcome gating. A rules update is sufficient.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Pre-Completion Conflict Gate For Mandatory Literals",
+        "hypothesis": "If completion policy explicitly blocks `OUTCOME_OK` whenever trusted mandatory sources require different literal values for the same required artifact, agents will avoid false-OK completions and correctly request precedence clarification.",
+        "change": "Add a compact rule in completion/outcome guidance: before any `report_completion` with `OUTCOME_OK` (including read-only/review tasks), reconcile mandatory directives that target the same artifact. If incompatible literal requirements exist and no explicit priority is defined, do not return `OUTCOME_OK`; return `OUTCOME_NONE_CLARIFICATION` with a minimal precedence question and cite both conflicting sources in grounding refs.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0035/AGENTS.md",
+            "change_summary": "Add 5-8 lines under completion policy to extend the existing conflict rule from mutation-only checks to final outcome selection before `report_completion`."
+          }
+        ],
+        "rollback": "Remove the added pre-completion conflict-gate bullets from `rules_versions/rv0035/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is workflow-level and applies to any trusted-source literal conflict on a shared artifact, without task-specific IDs or values."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0035/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0035/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": " whenever trusted mandatory sources require different literal values for the same required artifact, agents will avoid false-OK completions and correctly request precedence clarification.\",\n    \"change\": \"Add a compact rule in completion/outcome guidance: before any `report_completion` with `OUTCOME_OK` (including read-only/review tasks), reconcile mandatory directives that target the same artifact. If incompatible literal requirements exist and no explicit priority is defined, do not return `OUTCOME_OK`; return `OUTCOME_NONE_CLARIFICATION` with a minimal precedence question and cite both conflicting sources in grounding refs.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0035/AGENTS.md\",\n        \"change_summary\": \"Add 5-8 lines under completion policy to extend the existing conflict rule from mutation-only checks to final outcome selection before `report_completion`.\"\n      }\n    ],\n    \"rollback\": \"Remove the added pre-completion conflict-gate bullets from `rules_versions/rv0035/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is workflow-level and applies to any trusted-source literal conflict on a shared artifact, without task-specific IDs or values.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0035/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0035/AGENTS.md\",\n      \"reason\": \"Path is within allowed analyze/apply rules scope (`rules_versions/*/AGENTS.md`) and targets the active latest rules version.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "ndatory sources require different literal values for the same required artifact, agents will avoid false-OK completions and correctly request precedence clarification.\",\n    \"change\": \"Add a compact rule in completion/outcome guidance: before any `report_completion` with `OUTCOME_OK` (including read-only/review tasks), reconcile mandatory directives that target the same artifact. If incompatible literal requirements exist and no explicit priority is defined, do not return `OUTCOME_OK`; return `OUTCOME_NONE_CLARIFICATION` with a minimal precedence question and cite both conflicting sources in grounding refs.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0035/AGENTS.md\",\n        \"change_summary\": \"Add 5-8 lines under completion policy to extend the existing conflict rule from mutation-only checks to final outcome selection before `report_completion`.\"\n      }\n    ],\n    \"rollback\": \"Remove the added pre-completion conflict-gate bullets from `rules_versions/rv0035/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is workflow-level and applies to any trusted-source literal conflict on a shared artifact, without task-specific IDs or values.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0035/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0035/AGENTS.md\",\n      \"reason\": \"Path is within allowed analyze/apply rules scope (`rules_versions/*/AGENTS.md`) and targets the active latest rules version.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\ntokens used\n562,722\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260408T143501Z_4083868/t21/attempt_20260408T143501Z_94f4e4",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

@@ -46,21 +46,21 @@
 ## Запуск одной задачи
 
 ```bash
-cd /Users/skif/develop/bitgn-env
+cd /srv/aika-os/bitgn/code/bitgn-env
 ./run-codex-native.sh --env pac1 t01
 ```
 
 или напрямую:
 
 ```bash
-cd /Users/skif/develop/bitgn-env/codex-agent-native
+cd /srv/aika-os/bitgn/code/bitgn-env/codex-agent-native
 BENCHMARK_ID=bitgn/pac1-dev AGENT_ENV=pac1 uv run python runner.py t01
 ```
 
 ## Запуск нескольких задач в одном local run
 
 ```bash
-cd /Users/skif/develop/bitgn-env
+cd /srv/aika-os/bitgn/code/bitgn-env
 ./run-codex-native.sh --env pac1 t01 t02 t03
 ```
 
@@ -77,10 +77,40 @@ cd /Users/skif/develop/bitgn-env
   - `runs/<local_run_id>/run_manifest.jsonl`
 - По умолчанию `parallelism=2` (можно изменить `-p` или `NATIVE_PARALLELISM`).
 
+## Лидерборд: ключ + имя run
+
+- Лидерборд-флоу включается только если задан `BITGN_API_KEY`.
+- В `run-codex-native.sh` ключ читается из `BITGN_API_KEY`, а если env пустой — из `~/.bitgn/bitgn-api-key`.
+- Имя leaderboard run задается через `BITGN_RUN_NAME`.
+- Если `BITGN_RUN_NAME` не задан, используется дефолт: `codex-native <CODEX_MODEL>`.
+- Принятый нейминг:
+  - обычный: `[@skifmax]-[codex]-[Chiki-Banboni]`
+  - smoke: `[@skifmax]-[codex]-[Chiki-Banboni]-[smoke]`
+  - суффикс `aika` не использовать.
+
+Детальный runbook вынесен в проектные заметки:
+
+- `/srv/aika-os/bitgn/notes/native-leaderboard-runbook-2026-04-08.md`
+
+Проверка, что запуск действительно в лидерборд-режиме:
+
+- в CLI есть строка `[LEADERBOARD] Prepared run_id=...`
+- в `runs/<local_run_id>/run_manifest.jsonl` у записей есть непустой `leaderboard_run_id`
+
+## Полный прогон PAC1 (native)
+
+- В native-обертке нет флага `--all`, поэтому полный прогон передается явным списком задач.
+- Текущий PAC1 benchmark: `t01..t40`.
+
+```bash
+cd /srv/aika-os/bitgn/code/bitgn-env
+BITGN_RUN_NAME='[@skifmax]-[codex]-[Chiki-Banboni]' ./run-codex-native.sh --env pac1 -p 2 t{01..40}
+```
+
 ## Снять контекст задачи без Codex
 
 ```bash
-cd /Users/skif/develop/bitgn-env/codex-agent-native
+cd /srv/aika-os/bitgn/code/bitgn-env/codex-agent-native
 uv run python snapshot_task_context.py t03 --env pac1
 ```
 
@@ -90,7 +120,7 @@ uv run python snapshot_task_context.py t03 --env pac1
 
 По умолчанию:
 
-`/Users/skif/develop/bitgn-env/codex-agent-native/runs/<local_run_id>/<task>/<attempt>/`
+`/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/<local_run_id>/<task>/<attempt>/`
 
 Содержимое:
 

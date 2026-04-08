@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-08T15:44:19.028590+00:00",
+  "local_run_id": "local_run_20260408T150926Z_4108155",
+  "model": "gpt-5.3-codex",
+  "parallelism": 1,
+  "task_count": 1,
+  "rules_version": "rv0036",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t23",
+    "affected_tasks": [
+      "t23"
+    ],
+    "problem": "Task t23 fails with fail_group=unexpected_writes. The run correctly handled `inbox/msg_001.txt` first, but then continued processing later inbox items and performed extra mutations (`outbox/84515.json` write+delete and additional `outbox/seq.json` writes). Scoring is mutation-history based, so rollback did not remove the penalty. The missing guard is a strict one-item queue boundary after first-item resolution.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t23",
+      "status": "fail",
+      "fail_group": "unexpected_writes",
+      "diagnosis": "The run correctly handled `inbox/msg_001.txt` first, but then continued processing later inbox items and performed extra mutations (`outbox/84515.json` write+delete and additional `outbox/seq.json` writes). Scoring is mutation-history based, so rollback did not remove the penalty. The missing guard is a strict one-item queue boundary after first-item resolution.",
+      "focus": {
+        "primary_task_id": "t23",
+        "problem": "In one-item inbox-queue workflows, the agent mutates artifacts for later messages after resolving the first pending message, causing irreversible unexpected-write failures even if it later reverts.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t23"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Runtime tools behaved as designed; failure comes from execution policy/sequence control, which can be fixed with a rules-level queue-boundary gate.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Single-Item Inbox Queue Mutation Boundary",
+        "hypothesis": "If queue-mode inbox tasks explicitly lock execution to the lowest pending message and require immediate finalization after that item is resolved, agents will avoid speculative/rollback writes on later messages and eliminate unexpected-write failures.",
+        "change": "Add a compact inbox-queue rule: for instructions like process/work through inbox queue, select the lowest pending `inbox/msg_*.txt` as the only actionable item for the run. Build writes only for artifacts required by that item. After those writes are complete, immediately `report_completion`; do not write/delete artifacts for later inbox messages and do not perform rollback cleanup writes to `outbox/seq.json` or additional outbox IDs in the same run.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0036/AGENTS.md",
+            "change_summary": "Add a 6-10 line queue-boundary gate in inbox workflow/completion guidance enforcing one actionable inbox item per run and prohibiting later-item/rollback mutations."
+          }
+        ],
+        "rollback": "Remove the added inbox queue-boundary bullets from `rules_versions/rv0036/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is workflow-level (queue item boundary + mutation budget), contains no task-specific literals, and applies to any inbox queue dataset."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0036/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0036/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "iate finalization after that item is resolved, agents will avoid speculative/rollback writes on later messages and eliminate unexpected-write failures.\",\n    \"change\": \"Add a compact inbox-queue rule: for instructions like process/work through inbox queue, select the lowest pending `inbox/msg_*.txt` as the only actionable item for the run. Build writes only for artifacts required by that item. After those writes are complete, immediately `report_completion`; do not write/delete artifacts for later inbox messages and do not perform rollback cleanup writes to `outbox/seq.json` or additional outbox IDs in the same run.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0036/AGENTS.md\",\n        \"change_summary\": \"Add a 6-10 line queue-boundary gate in inbox workflow/completion guidance enforcing one actionable inbox item per run and prohibiting later-item/rollback mutations.\"\n      }\n    ],\n    \"rollback\": \"Remove the added inbox queue-boundary bullets from `rules_versions/rv0036/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is workflow-level (queue item boundary + mutation budget), contains no task-specific literals, and applies to any inbox queue dataset.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0036/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0036/AGENTS.md\",\n      \"reason\": \"Path is within allowed rules scope (`rules_versions/<active>/AGENTS.md`) and matches the active rules version used by this run.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "ter that item is resolved, agents will avoid speculative/rollback writes on later messages and eliminate unexpected-write failures.\",\n    \"change\": \"Add a compact inbox-queue rule: for instructions like process/work through inbox queue, select the lowest pending `inbox/msg_*.txt` as the only actionable item for the run. Build writes only for artifacts required by that item. After those writes are complete, immediately `report_completion`; do not write/delete artifacts for later inbox messages and do not perform rollback cleanup writes to `outbox/seq.json` or additional outbox IDs in the same run.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0036/AGENTS.md\",\n        \"change_summary\": \"Add a 6-10 line queue-boundary gate in inbox workflow/completion guidance enforcing one actionable inbox item per run and prohibiting later-item/rollback mutations.\"\n      }\n    ],\n    \"rollback\": \"Remove the added inbox queue-boundary bullets from `rules_versions/rv0036/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is workflow-level (queue item boundary + mutation budget), contains no task-specific literals, and applies to any inbox queue dataset.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0036/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0036/AGENTS.md\",\n      \"reason\": \"Path is within allowed rules scope (`rules_versions/<active>/AGENTS.md`) and matches the active rules version used by this run.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\ntokens used\n377,793\n",
+      "workspace": "/srv/aika-os/bitgn/code/bitgn-env/codex-agent-native/runs/local_run_20260408T150926Z_4108155/t23/attempt_20260408T151750Z_68f225",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

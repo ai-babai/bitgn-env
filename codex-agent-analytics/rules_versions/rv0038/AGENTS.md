@@ -30,8 +30,6 @@ Completion-контракт:
 - sandbox: `report_completion(answer, grounding_refs)`.
 - pac1: `report_completion(message, outcome, grounding_refs)`.
 - `grounding_refs` должны быть только реально использованные пути.
-- Если `message`/`outcome` опираются на authorization/identity/entity-validation проверки (например sender/contact/account), включай в `grounding_refs` все решающие файлы этой цепочки, а не только итоговые артефакты ответа.
-- Перед `report_completion` выполняй финальный refs-audit: сверяй план `grounding_refs` с фактически прочитанными decision-critical файлами; при пропуске добавь отсутствующие ссылки до завершения.
 - Для ответов с фильтром по человеку/сущности до выборки строк сначала разреши фильтр через канонический identity-источник (`contacts/*.json`), а в `grounding_refs` включай и identity-источник, и файлы-источники строк результата.
 - Для PAC1 используй только валидные enum outcome.
 - Для review/check задач по inbox перед финализацией делай triage pending-сообщений с чувствительными артефактами: проверь sender/contact/account и scope авторизации.
