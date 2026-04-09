@@ -1,105 +1,111 @@
 # bitgn-env
 
-Local workspace for BitGN sample runs via OmniRoute.
+Workspace for BitGN runs with focus on the native Codex solver and analytics-driven evolution.
 
-## Quick start
+## Architecture (high level)
+
+This repo uses a two-module loop:
+
+- `codex-agent-native`: executes benchmark tasks and produces full task artifacts.
+- `codex-agent-analytics`: reads native artifacts, finds failure patterns, proposes rule updates, and deploys new rule versions.
+
+The key idea is to keep runtime solving and post-run analysis separated:
+
+- native runner optimizes for reliable execution and traceability,
+- analytics runner optimizes for controlled, auditable policy evolution.
+
+## Main components
+
+- `run-codex-native.sh`: entry wrapper for native runs (sandbox/pac1, parallelism, model, leaderboard flags).
+- `codex-agent-native/runner.py`: orchestrates `start_playground/start_trial`, per-task workspace creation, Codex session execution, scoring, and manifest writing.
+- `codex-agent-native/runtime_tools.py`: tool gateway exposed to Codex during solve.
+- `codex-agent-native/local-rules/AGENTS.md`: active local policy used by native solver.
+- `run-codex-analytics.sh`: entry wrapper for `analyze | apply | deploy` workflows.
+- `codex-agent-analytics/cli.py`: analytics pipeline control plane.
+- `codex-agent-analytics/rules_versions/`: versioned policy snapshots (`rvXXXX`).
+
+## Evolution cycle (top level)
+
+Typical iteration:
+
+1. **Solve**: run native on selected scope (single task, risk cluster, or full benchmark).
+2. **Analyze**: inspect failed tasks and generate proposals.
+3. **Apply**: apply one approved proposal into a new rules version.
+4. **Deploy**: copy selected rules version to `codex-agent-native/local-rules/AGENTS.md`.
+5. **Validate**: rerun targeted tasks and risk cluster; if green, run full smoke; then optional leaderboard run.
+
+This loop gives fast local iteration with controlled blast radius before leaderboard submissions.
+
+## Quick commands
+
+### Native solve
 
 ```bash
-cd /Users/skif/develop/bitgn-env
+cd bitgn-env
 
-# sandbox smoke (defaults to t01 t02)
-./run-sandbox.sh --sync
-
-# sandbox full benchmark
-./run-sandbox.sh --all
-
-# PAC1 single task
-./run-pac1.sh --sync t01
-
-# Codex-core sandbox single task
-./run-codex-sandbox.sh --sync t01
-
-# Codex evolution pipeline modes
-./run-codex-evolve.sh solve --all
-./run-codex-evolve.sh solve --parallelism 2 t01 t02
-./run-codex-evolve.sh analyze
-./run-codex-evolve.sh propose-prompts
-./run-codex-evolve.sh propose-code
-./run-codex-evolve.sh apply-prompts --hypothesis "..."
-./run-codex-evolve.sh full-step --hypothesis "..."
-./run-codex-evolve.sh full-step --env pac1 --parallelism 2 --hypothesis "..." t03 t22
-./run-codex-evolve.sh autopilot --n 3 --no-improve-limit 2 --hypothesis "..."
-./run-codex-evolve.sh autopilot --env pac1 --parallelism 2 --n 3 --no-improve-limit 999 --task-scope affected t03 t22
-
-# run prompt evolution on affected tasks only
-./run-codex-evolve.sh full-step --env pac1 --task-scope affected --affected-from last-apply --max-affected 6 --hypothesis "..."
-./run-codex-evolve.sh autopilot --env pac1 --task-scope affected --affected-from last-apply --max-affected 8 --n 2 --no-improve-limit 2 --hypothesis "..."
-
-# autopilot with fixed task ids (same tasks every step)
-./run-codex-evolve.sh autopilot --env pac1 --n 3 --no-improve-limit 999 --hypothesis "pac1 fixed-4" t03 t22 t23 t25
-
-# autopilot with fixed task ids + affected behavior
-# (next iterations keep only still-failing tasks from this fixed set)
-./run-codex-evolve.sh autopilot --env pac1 --task-scope affected --n 3 --no-improve-limit 999 --hypothesis "pac1 fixed-4 affected" t03 t22 t23 t25
-
-# classic fixed-scope evolution (same 4 tasks, 3 sequential iterations)
-./run-codex-evolve.sh full-step --env pac1 --hypothesis "pac1 fixed-4 step1" t03 t22 t23 t25
-./run-codex-evolve.sh full-step --env pac1 --hypothesis "pac1 fixed-4 step2" t03 t22 t23 t25
-./run-codex-evolve.sh full-step --env pac1 --hypothesis "pac1 fixed-4 step3" t03 t22 t23 t25
-
-# same as above, wrapped in one script
-./run-pac1-fixed4-evo3.sh
-
-# run codex-agent against PAC1 env
-./run-codex-evolve.sh solve --env pac1 --all
-
-# codex-native MVP (one task, isolated workspace)
+# single PAC1 task
 ./run-codex-native.sh --env pac1 t01
 
-# all CLI/report timestamps are shown in UTC and MSK (Europe/Moscow)
-
-# show latest unified task-run table
-./runlog-latest.sh
+# full PAC1 (current benchmark uses t01..t43)
+./run-codex-native.sh --env pac1 -p 5 t{01..43}
 ```
 
-## Notes
+### Smoke mode (no leaderboard)
 
-- For Codex agents, use only `OMNIROUTE_API_KEY`.
-- For Codex scripts (`run-codex-*.sh`) key resolution order is:
-  1. `OMNIROUTE_API_KEY` from environment
+```bash
+BITGN_API_KEY='' BITGN_API_KEY_FILE='/tmp/bitgn-no-key' \
+BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[smoke]' \
+./run-codex-native.sh --env pac1 -p 5 t{01..43}
+```
+
+### Leaderboard mode
+
+```bash
+BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[xNNN]' \
+./run-codex-native.sh --env pac1 -p 5 t{01..43}
+```
+
+### Analytics evolution
+
+```bash
+# analyze one failed task from a local run
+./run-codex-analytics.sh analyze --env pac1 --run-id <local_run_id> -p 1 --focus-task t36 t36
+
+# apply selected proposal from an existing rules version
+./run-codex-analytics.sh apply --proposal-id prop-001 --from-version rv0038
+
+# deploy resulting rules version to native local-rules
+./run-codex-analytics.sh deploy --rules-version rv0039 --yes
+```
+
+## Artifacts and observability
+
+- Native run root: `codex-agent-native/runs/<local_run_id>/`
+- Per-task workspace: `codex-agent-native/runs/<local_run_id>/<task_id>/attempt_<timestamp>_<id>/`
+- Run manifest: `codex-agent-native/runs/<local_run_id>/run_manifest.jsonl`
+- Per-task score: `.../score.json` (pass/fail, score details, tokens, steps)
+
+Analytics artifacts:
+
+- analysis summary: `codex-agent-analytics/analysis/aXXXX.json`
+- report: `codex-agent-analytics/reports/rXXXX.md`
+- proposals: `codex-agent-analytics/proposals/rules/<rv>/prop-XXX.md`
+- apply/deploy reports: `codex-agent-analytics/applies/aXXXX.md`, `codex-agent-analytics/deploy/dXXXX.md`
+
+## Configuration notes
+
+- Primary key for Codex flows: `OMNIROUTE_API_KEY`.
+- Wrapper key resolution order:
+  1. `OMNIROUTE_API_KEY` env
   2. `BITGN_OMNIROUTE_KEY_FILE`
   3. `$HOME/.codex/omniroute-api-key`
-- Recommended per-machine setup (local and server):
-  - store key at `$HOME/.codex/omniroute-api-key`
-  - `chmod 600 $HOME/.codex/omniroute-api-key`
-- You can override model/base URL via env:
-  - `MODEL_ID=codex/gpt-5.3-codex-high OPENAI_BASE_URL=https://omni.mipopkov.com/v1 ./run-sandbox.sh`
-- For Codex-core runner:
-  - `CODEX_MODEL=gpt-5.3-codex ./run-codex-sandbox.sh t01`
-- For Codex-native MVP runner:
-  - `CODEX_MODEL=gpt-5.3-codex ./run-codex-native.sh --env pac1 t01`
-- Task parallelism inside solve/evolution is supported via `--parallelism N` (alias: `--parallels N`).
-- Runlog home default in wrappers: `$HOME/runlog-registry` (override with `RUNLOG_HOME`).
-- Do not run multiple `full-step`/`autopilot` processes in parallel against one workspace because prompt/version artifacts are shared.
+- Native model override: `CODEX_MODEL` (default `gpt-5.3-codex`).
+- Native parallelism: `-p` / `--parallelism` or `NATIVE_PARALLELISM`.
 
-## Logging
+## Related docs
 
-- Runners write JSONL logs to `/Users/skif/develop/bitgn-env/logs/`
-- Override log directory with `BITGN_LOG_DIR=/path/to/logs`
-- Logged events include:
-  - run/task start+finish
-  - task instruction
-  - prompt sections (system + steering)
-  - agent reasoning/tool steps
-  - submission payload
-  - score details + expected hints (when parseable)
-
-## Unified run registry (task-run as atomic unit)
-
-- Registry home (default): `$HOME/runlog-registry`
-- Main files:
-  - `/Users/skif/develop/runlog-registry/index/runs.jsonl`
-  - `/Users/skif/develop/runlog-registry/index/task_runs.jsonl`
-- Every task attempt is written as one `task_run` row (including partial runs)
-- Quick view of latest run:
-  - `./runlog-latest.sh`
+- Native details: `codex-agent-native/README.md`
+- Analytics details: `codex-agent-analytics/README.md`
+- Architecture deep dive: `ARCHITECTURE.md`
+- Rule design and evolution policy: `RULES_EVOLUTION_PRINCIPLES.md`
+- Root-level navigation/rules on this machine: `AGENTS.md`
