@@ -12,6 +12,7 @@ It reads solve artifacts from native runs and runs Codex analysis sessions per t
 - Proposal artifacts are traceable and reversible.
 - Best-practice harness map is tracked as draft in `docs/references/harness-engineering-structure-draft.md`.
 - Harness-first by default: prefer rules and process updates; code proposals only for proven blockers.
+- PAC leaderboard context: https://bitgn.com/challenge/PAC (benchmark of exact workflow execution quality in constrained task workspaces).
 
 ## Modes
 

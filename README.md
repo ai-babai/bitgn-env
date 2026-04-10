@@ -2,6 +2,11 @@
 
 Workspace for BitGN runs with focus on the native Codex solver and analytics-driven evolution.
 
+## PAC leaderboard
+
+- Challenge page: https://bitgn.com/challenge/PAC
+- PAC is a benchmark where the agent executes inbox/ops workflows inside constrained task workspaces and is scored on exact outcome correctness, file mutations, and grounding references.
+
 ## Architecture (high level)
 
 This repo uses a two-module loop:
@@ -83,6 +88,8 @@ BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[smoke]' \
 BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[xNNN]' \
 ./run-codex-native.sh --env pac1 -p 5 t{01..43}
 ```
+
+See leaderboard standings and run comparisons at https://bitgn.com/challenge/PAC.
 
 ### Analytics evolution
 

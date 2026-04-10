@@ -91,6 +91,8 @@ cd /srv/aika-os/bitgn/code/bitgn-env
 Детальный runbook вынесен в проектные заметки:
 
 - `/srv/aika-os/bitgn/notes/native-leaderboard-runbook-2026-04-08.md`
+- Публичная страница соревнования PAC: https://bitgn.com/challenge/PAC
+- PAC — это контест на точное выполнение task-workflow (outcome, file mutations, refs) в ограниченном runtime.
 
 Проверка, что запуск действительно в лидерборд-режиме:
 
