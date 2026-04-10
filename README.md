@@ -7,6 +7,17 @@ Workspace for BitGN runs with focus on the native Codex solver and analytics-dri
 - Challenge page: https://bitgn.com/challenge/PAC
 - PAC is a benchmark where the agent executes inbox/ops workflows inside constrained task workspaces and is scored on exact outcome correctness, file mutations, and grounding references.
 
+## How It Works (short)
+
+This setup is almost a meme - but it works:
+
+- `AGENTS.md` (<= 100 lines) - yes, a tiny Markdown file is the policy brain.
+- Codex CLI - runs the actual task session.
+- Tool wrapper - exposes only the PAC-relevant tools to Codex.
+- Model: `gpt-5.3-codex` - current default solver.
+
+In short: `100-line policy file -> Codex session -> constrained tools -> scored result`.
+
 ## Architecture (high level)
 
 This repo uses a two-module loop:
