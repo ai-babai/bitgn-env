@@ -1,0 +1,235 @@
+{
+  "ts": "2026-04-09T14:13:29.371325+00:00",
+  "local_run_id": "local_run_20260409T140740Z_23599",
+  "model": "gpt-5.3-codex-spark",
+  "parallelism": 4,
+  "task_count": 4,
+  "rules_version": "rv0040",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t21",
+    "affected_tasks": [
+      "t21",
+      "t08",
+      "t41"
+    ],
+    "problem": "Task t21 fails with fail_group=one_short_token. Tool evidence shows the agent read both conflicting docs and marked the inbox item complete, then reported `OUTCOME_NONE_CLARIFICATION`. Because the mutation occurred despite unresolved mandatory-output conflict, the run ended with an avoidable workspace delta, which is incompatible with expected no-change behavior for this run.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "focus": {
+        "primary_task_id": "t08",
+        "problem": "Task t08 failed because the instruction was incomplete (`Create captur`), yet the agent executed a full capture workflow and returned `OUTCOME_OK`; scorer expected `OUTCOME_NONE_CLARIFICATION`. This indicates the instruction-completeness gate was not enforced before mutation.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t08"
+        ]
+      },
+      "task_id": "t08",
+      "status": "fail",
+      "fail_group": "one_short_token",
+      "diagnosis": "The run treated a truncated imperative as executable and wrote capture/card/thread artifacts from the first inbox item, then reported success (`submission.outcome = OUTCOME_OK`). Score evidence explicitly states expected `OUTCOME_NONE_CLARIFICATION`, so this is a policy-level clarification miss rather than a tool failure.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "All observed behavior is attributable to instruction interpretation and outcome selection under ambiguity; no blocking runtime/tooling limitation is indicated, so a rules-only clarification gate is sufficient.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Pre-mutation clarification gate for truncated workflow instructions",
+        "hypothesis": "If all capture/copy/quote instructions are checked for semantic completion before any mutation, truncated commands will consistently route to `OUTCOME_NONE_CLARIFICATION` instead of inferred execution.",
+        "change": "Add a compact decision rule in the active rules AGENTS: when an instruction appears truncated or incomplete (unfinished imperative, partial workflow verb/object, or missing mandatory target field), return `OUTCOME_NONE_CLARIFICATION` with one minimal disambiguation question and perform no `write/mkdir/move/delete` actions. Apply this explicitly before any capture/copy/quote/thread workflow path.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+            "change_summary": "Add/strengthen a short pre-mutation completeness check and non-OK-outcome requirement for truncated or ambiguous imperative commands in completion/decision guardrails."
+          }
+        ],
+        "rollback": "Remove the new incomplete-instruction bullets from `codex-agent-analytics/rules_versions/rv0040/AGENTS.md` and keep existing workflow rules unchanged.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 28,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The change handles a generic ambiguity pattern (incomplete commands) across workflow families and avoids task-specific IDs, file names, or expected literals."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "l capture/copy/quote instructions are checked for semantic completion before any mutation, truncated commands will consistently route to `OUTCOME_NONE_CLARIFICATION` instead of inferred execution.\",\n    \"change\": \"Add a compact decision rule in the active rules AGENTS: when an instruction appears truncated or incomplete (unfinished imperative, partial workflow verb/object, or missing mandatory target field), return `OUTCOME_NONE_CLARIFICATION` with one minimal disambiguation question and perform no `write/mkdir/move/delete` actions. Apply this explicitly before any capture/copy/quote/thread workflow path.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n        \"change_summary\": \"Add/strengthen a short pre-mutation completeness check and non-OK-outcome requirement for truncated or ambiguous imperative commands in completion/decision guardrails.\"\n      }\n    ],\n    \"rollback\": \"Remove the new incomplete-instruction bullets from `codex-agent-analytics/rules_versions/rv0040/AGENTS.md` and keep existing workflow rules unchanged.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 28,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The change handles a generic ambiguity pattern (incomplete commands) across workflow families and avoids task-specific IDs, file names, or expected literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"rules_versions/rv0040/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n      \"reason\": \"Target path is whitelisted for rules and normalized to the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code assessment is optional; `proposal_code` is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "e instructions are checked for semantic completion before any mutation, truncated commands will consistently route to `OUTCOME_NONE_CLARIFICATION` instead of inferred execution.\",\n    \"change\": \"Add a compact decision rule in the active rules AGENTS: when an instruction appears truncated or incomplete (unfinished imperative, partial workflow verb/object, or missing mandatory target field), return `OUTCOME_NONE_CLARIFICATION` with one minimal disambiguation question and perform no `write/mkdir/move/delete` actions. Apply this explicitly before any capture/copy/quote/thread workflow path.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n        \"change_summary\": \"Add/strengthen a short pre-mutation completeness check and non-OK-outcome requirement for truncated or ambiguous imperative commands in completion/decision guardrails.\"\n      }\n    ],\n    \"rollback\": \"Remove the new incomplete-instruction bullets from `codex-agent-analytics/rules_versions/rv0040/AGENTS.md` and keep existing workflow rules unchanged.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 28,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The change handles a generic ambiguity pattern (incomplete commands) across workflow families and avoids task-specific IDs, file names, or expected literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"rules_versions/rv0040/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n      \"reason\": \"Target path is whitelisted for rules and normalized to the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code assessment is optional; `proposal_code` is null.\"\n    }\n  ]\n}\ntokens used\n72\u00a0232\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T140740Z_23599/t08/attempt_20260409T140741Z_a98cb8",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "focus": {
+        "primary_task_id": "t21",
+        "problem": "The run encountered conflicting mandatory completion directives (`DONE` vs `FINISHED` for `result.txt`) but still performed a filesystem mutation (`write` to `inbox/inbox.md`), and scoring reported `expected no changes, but got 1`.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t21"
+        ]
+      },
+      "task_id": "t21",
+      "status": "fail",
+      "fail_group": "one_short_token",
+      "diagnosis": "Tool evidence shows the agent read both conflicting docs and marked the inbox item complete, then reported `OUTCOME_NONE_CLARIFICATION`. Because the mutation occurred despite unresolved mandatory-output conflict, the run ended with an avoidable workspace delta, which is incompatible with expected no-change behavior for this run.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "This is a policy-governance sequencing gap: a no-write guard under unresolved conflict can be enforced in rules, with no evidence of a runtime/tooling blocker.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Add conflict-locked no-mutation gate for inbox completion flows",
+        "hypothesis": "If conflict resolution is enforced before any mutation in process-inbox workflows, unresolved mandatory-output directives will no longer produce non-deterministic side effects.",
+        "change": "In the active rules AGENTS, add a dedicated conflict gate in completion/inbox workflow: before any `write` during `PROCESS INBOX` or related review tasks, if trusted docs impose incompatible literal requirements on the same target artifact and no explicit precedence exists, transition to `OUTCOME_NONE_CLARIFICATION` and skip all filesystem writes in that task (including inbox item updates). Keep completion outcome as non-OK until conflict is resolved; if priority is later made explicit, resume normal completion path.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+            "change_summary": "Add explicit no-write precondition for conflicting must-do/literal directives; scope it to inbox/review tasks and completion decisions before any write operations."
+          }
+        ],
+        "rollback": "Remove the added conflict-gate bullets from `codex-agent-analytics/rules_versions/rv0040/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 24,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule applies to all inbox/review-style tasks with unresolved mandatory policy conflicts and does not encode task IDs, specific expected answers, or one-off paths."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "e any mutation in process-inbox workflows, unresolved mandatory-output directives will no longer produce non-deterministic side effects.\",\n    \"change\": \"In the active rules AGENTS, add a dedicated conflict gate in completion/inbox workflow: before any `write` during `PROCESS INBOX` or related review tasks, if trusted docs impose incompatible literal requirements on the same target artifact and no explicit precedence exists, transition to `OUTCOME_NONE_CLARIFICATION` and skip all filesystem writes in that task (including inbox item updates). Keep completion outcome as non-OK until conflict is resolved; if priority is later made explicit, resume normal completion path.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n        \"change_summary\": \"Add explicit no-write precondition for conflicting must-do/literal directives; scope it to inbox/review tasks and completion decisions before any write operations.\"\n      }\n    ],\n    \"rollback\": \"Remove the added conflict-gate bullets from `codex-agent-analytics/rules_versions/rv0040/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 24,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to all inbox/review-style tasks with unresolved mandatory policy conflicts and does not encode task IDs, specific expected answers, or one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"rules_versions/rv0040/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n      \"reason\": \"Target is whitelisted and matches active rules-version path.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code assessment is optional and proposal_code is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "rocess-inbox workflows, unresolved mandatory-output directives will no longer produce non-deterministic side effects.\",\n    \"change\": \"In the active rules AGENTS, add a dedicated conflict gate in completion/inbox workflow: before any `write` during `PROCESS INBOX` or related review tasks, if trusted docs impose incompatible literal requirements on the same target artifact and no explicit precedence exists, transition to `OUTCOME_NONE_CLARIFICATION` and skip all filesystem writes in that task (including inbox item updates). Keep completion outcome as non-OK until conflict is resolved; if priority is later made explicit, resume normal completion path.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n        \"change_summary\": \"Add explicit no-write precondition for conflicting must-do/literal directives; scope it to inbox/review tasks and completion decisions before any write operations.\"\n      }\n    ],\n    \"rollback\": \"Remove the added conflict-gate bullets from `codex-agent-analytics/rules_versions/rv0040/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 24,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to all inbox/review-style tasks with unresolved mandatory policy conflicts and does not encode task IDs, specific expected answers, or one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"rules_versions/rv0040/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0040/AGENTS.md\",\n      \"reason\": \"Target is whitelisted and matches active rules-version path.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"Code assessment is optional and proposal_code is null.\"\n    }\n  ]\n}\ntokens used\n63\u00a0919\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T140740Z_23599/t21/attempt_20260409T140741Z_212976",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "task_id": "t22",
+      "status": "fail",
+      "fail_group": "answer_mismatch",
+      "diagnosis": "Heuristic fallback analysis due to empty/non-json Codex output.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Fallback mode keeps harness-first default; no proven code blocker extracted.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "tighten generic completion checklist",
+        "hypothesis": "More explicit generic completion policy reduces repeated format/process misses.",
+        "change": "Add one generic pre-completion checklist item in rules; avoid task-specific literals.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+            "change_summary": "Append one short generic pre-completion checklist rule."
+          }
+        ],
+        "rollback": "Revert the added checklist line from next rules version.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 10,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "No task-specific ids or exact expected values in proposal."
+        }
+      },
+      "proposal_code": null,
+      "_fallback": true,
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T140740Z_23599/t22/attempt_20260409T140741Z_05233e",
+      "score": 0.0,
+      "passed": false,
+      "code_target_validation": [],
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0001/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0040/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ]
+    },
+    {
+      "focus": {
+        "primary_task_id": "t41",
+        "problem": "The response for a relative-date prompt used the wrong reference date, producing `10-04-2026` instead of `04-03-2026`; this indicates the model did not reliably derive \"tomorrow\" from the task/run-provided current-date context.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t41"
+        ]
+      },
+      "task_id": "t41",
+      "status": "fail",
+      "fail_group": "one_short_token",
+      "diagnosis": "The answer format was correct (`DD-MM-YYYY`) but the day value is from an incorrect baseline date, so the error is a relative-time grounding failure rather than formatting or tool-output formatting. The likely defect is ambiguous instruction priority for what counts as \"today\" during execution.",
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "No runtime exception or missing API/tooling behavior is evident; this is a deterministic-policy/grounding issue that should be resolved by stronger harness instructions and date-resolution guidance.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Define canonical now source for relative-date tasks",
+        "hypothesis": "If the harness requires all relative-date answers to be computed from an explicitly provided run/current-date field, the assistant will stop using an incorrect implicit clock and return consistent absolute dates.",
+        "change": "In the instruction policy, add a compact section for temporal prompts: require resolving `today/tomorrow/yesterday` from the run context (`current_date` + `utc_offset` if present) before answering, and explicitly disallow model-internal time inference. Keep a short precedence rule: `run-provided current_date` > `explicit date in task` > `any internal model timestamp`.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/docs/instructions/index.md",
+            "change_summary": "Add a 4\u20136 line rule under short-answer/date tasks stating canonical source-of-truth for relative dates, computation examples, and required output order in DD-MM-YYYY."
+          }
+        ],
+        "rollback": "Remove the new relative-date rule block from `docs/instructions/index.md` if it causes regressions.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule applies to all relative-time prompts in the harness and is independent of task ID, expected literal, or specific file paths."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "accepted",
+          "original_path": "docs/instructions/index.md",
+          "final_path": "codex-agent-analytics/docs/instructions/index.md",
+          "reason": "existing instruction doc"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "or relative-date tasks\",\n    \"hypothesis\": \"If the harness requires all relative-date answers to be computed from an explicitly provided run/current-date field, the assistant will stop using an incorrect implicit clock and return consistent absolute dates.\",\n    \"change\": \"In the instruction policy, add a compact section for temporal prompts: require resolving `today/tomorrow/yesterday` from the run context (`current_date` + `utc_offset` if present) before answering, and explicitly disallow model-internal time inference. Keep a short precedence rule: `run-provided current_date` > `explicit date in task` > `any internal model timestamp`.\",\n    \"target_files\": [\n      {\n        \"path\": \"docs/instructions/index.md\",\n        \"change_summary\": \"Add a 4\u20136 line rule under short-answer/date tasks stating canonical source-of-truth for relative dates, computation examples, and required output order in DD-MM-YYYY.\"\n      }\n    ],\n    \"rollback\": \"Remove the new relative-date rule block from `docs/instructions/index.md` if it causes regressions.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to all relative-time prompts in the harness and is independent of task ID, expected literal, or specific file paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"ok\",\n      \"original_path\": \"docs/instructions/index.md\",\n      \"final_path\": \"docs/instructions/index.md\",\n      \"reason\": \"Allowed policy-doc location and aligns with the instruction to start from this file for analysis-driven harness updates.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No code change proposed because the classification is optional and a rules-level fix is sufficient for this focused failure.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "asks\",\n    \"hypothesis\": \"If the harness requires all relative-date answers to be computed from an explicitly provided run/current-date field, the assistant will stop using an incorrect implicit clock and return consistent absolute dates.\",\n    \"change\": \"In the instruction policy, add a compact section for temporal prompts: require resolving `today/tomorrow/yesterday` from the run context (`current_date` + `utc_offset` if present) before answering, and explicitly disallow model-internal time inference. Keep a short precedence rule: `run-provided current_date` > `explicit date in task` > `any internal model timestamp`.\",\n    \"target_files\": [\n      {\n        \"path\": \"docs/instructions/index.md\",\n        \"change_summary\": \"Add a 4\u20136 line rule under short-answer/date tasks stating canonical source-of-truth for relative dates, computation examples, and required output order in DD-MM-YYYY.\"\n      }\n    ],\n    \"rollback\": \"Remove the new relative-date rule block from `docs/instructions/index.md` if it causes regressions.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule applies to all relative-time prompts in the harness and is independent of task ID, expected literal, or specific file paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"ok\",\n      \"original_path\": \"docs/instructions/index.md\",\n      \"final_path\": \"docs/instructions/index.md\",\n      \"reason\": \"Allowed policy-doc location and aligns with the instruction to start from this file for analysis-driven harness updates.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"\",\n      \"final_path\": \"\",\n      \"reason\": \"No code change proposed because the classification is optional and a rules-level fix is sufficient for this focused failure.\"\n    }\n  ]\n}\ntokens used\n5\u00a0304\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T140740Z_23599/t41/attempt_20260409T140832Z_47ba62",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

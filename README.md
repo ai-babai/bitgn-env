@@ -50,6 +50,25 @@ cd bitgn-env
 ./run-codex-native.sh --env pac1 -p 5 t{01..43}
 ```
 
+### Backend selection (Spark / OmniRoute)
+
+```bash
+# Spark/direct Codex backend (uses ChatGPT login or selected codex profile)
+CODEX_BACKEND=spark ./run-codex-native.sh --env pac1 t01
+
+# Spark + explicit profile (if you configured one in ~/.codex/config.toml)
+CODEX_BACKEND=spark CODEX_PROFILE=<your-spark-profile> ./run-codex-native.sh --env pac1 t01
+
+# OmniRoute backend (current default)
+CODEX_BACKEND=omniroute ./run-codex-native.sh --env pac1 t01
+```
+
+Notes:
+
+- `CODEX_PROFILE` is optional; if set, it is passed to `codex exec --profile <name>`.
+- If `CODEX_BACKEND=spark` and `CODEX_PROFILE` is empty, wrappers force direct provider via `-c model_provider=openai`.
+- OmniRoute key is required only when `CODEX_BACKEND=omniroute`.
+
 ### Smoke mode (no leaderboard)
 
 ```bash
@@ -94,7 +113,9 @@ Analytics artifacts:
 
 ## Configuration notes
 
-- Primary key for Codex flows: `OMNIROUTE_API_KEY`.
+- Backend switch: `CODEX_BACKEND=omniroute|spark` (default: `omniroute`).
+- Optional profile override for Codex CLI: `CODEX_PROFILE=<profile-name>`.
+- OmniRoute key for Codex flows: `OMNIROUTE_API_KEY` (required only for `CODEX_BACKEND=omniroute`).
 - Wrapper key resolution order:
   1. `OMNIROUTE_API_KEY` env
   2. `BITGN_OMNIROUTE_KEY_FILE`

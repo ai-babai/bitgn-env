@@ -1,0 +1,131 @@
+{
+  "ts": "2026-04-09T16:01:15.623781+00:00",
+  "local_run_id": "local_run_20260409T155543Z_43913",
+  "model": "gpt-5.3-codex",
+  "parallelism": 2,
+  "task_count": 2,
+  "rules_version": "rv0046",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t04",
+    "affected_tasks": [
+      "t04"
+    ],
+    "problem": "Task t04 fails with fail_group=unsupported_channel. Instruction requested an external action (\"Email Sam a digest...\") but the run produced no email artifact and executed no `write` calls; it only called `report_completion` with `OUTCOME_OK` and a \"Sent to Sam\" claim. The workspace tree for this attempt had no `outbox/` path, so successful send semantics were not grounded in executable workflow evidence. This is a rules-gap in outcome selection for unavailable external-channel actions, not a runtime code blocker.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t04",
+      "status": "fail",
+      "fail_group": "unsupported_channel",
+      "diagnosis": "Instruction requested an external action (\"Email Sam a digest...\") but the run produced no email artifact and executed no `write` calls; it only called `report_completion` with `OUTCOME_OK` and a \"Sent to Sam\" claim. The workspace tree for this attempt had no `outbox/` path, so successful send semantics were not grounded in executable workflow evidence. This is a rules-gap in outcome selection for unavailable external-channel actions, not a runtime code blocker.",
+      "focus": {
+        "primary_task_id": "t04",
+        "problem": "Agent claims completion of an external send action without executable channel/artifact evidence, returning `OUTCOME_OK` instead of unsupported/clarification.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t04"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Failure is attributable to missing/weak harness guidance for unavailable external actions and claim-verification before `OUTCOME_OK`; no runner/tool-gateway defect is required to explain the behavior.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Require Unsupported/Clarification For Unexecutable External Sends",
+        "hypothesis": "If rules explicitly require executable artifact/channel evidence for external-action verbs before `OUTCOME_OK`, agents will stop returning false success messages like \"Sent\" when no send path exists.",
+        "change": "Add a compact rule in local AGENTS completion policy: for instructions requiring external delivery (email/message/post/API call), first verify a supported workflow and target artifact path exist in the current repo/toolset. If action is unavailable, return `OUTCOME_NONE_UNSUPPORTED`; if an in-repo substitute might be acceptable but not explicit, return `OUTCOME_NONE_CLARIFICATION`. Also require message truthfulness: do not use completion verbs like \"sent/posted\" unless the corresponding mutation artifact was actually created in this run.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0046/AGENTS.md",
+            "change_summary": "Insert 3-5 bullets in the completion/outcome section defining (1) external-action executability check, (2) mandatory fallback outcomes (`OUTCOME_NONE_UNSUPPORTED` vs `OUTCOME_NONE_CLARIFICATION`), and (3) prohibition on success-verb claims without mutation evidence."
+          }
+        ],
+        "rollback": "Remove the newly added external-action executability/truthfulness bullets from `rules_versions/rv0046/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "Rule is channel-agnostic and evidence-based (artifact/workflow presence), avoiding task-specific literals, names, or paths beyond existing policy structures."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0046/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0046/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "d a compact rule in local AGENTS completion policy: for instructions requiring external delivery (email/message/post/API call), first verify a supported workflow and target artifact path exist in the current repo/toolset. If action is unavailable, return `OUTCOME_NONE_UNSUPPORTED`; if an in-repo substitute might be acceptable but not explicit, return `OUTCOME_NONE_CLARIFICATION`. Also require message truthfulness: do not use completion verbs like \\\"sent/posted\\\" unless the corresponding mutation artifact was actually created in this run.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n        \"change_summary\": \"Insert 3-5 bullets in the completion/outcome section defining (1) external-action executability check, (2) mandatory fallback outcomes (`OUTCOME_NONE_UNSUPPORTED` vs `OUTCOME_NONE_CLARIFICATION`), and (3) prohibition on success-verb claims without mutation evidence.\"\n      }\n    ],\n    \"rollback\": \"Remove the newly added external-action executability/truthfulness bullets from `rules_versions/rv0046/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"Rule is channel-agnostic and evidence-based (artifact/workflow presence), avoiding task-specific literals, names, or paths beyond existing policy structures.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"reason\": \"Whitelisted active rules target; no normalization needed.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"N/A\",\n      \"final_path\": \"N/A\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "local AGENTS completion policy: for instructions requiring external delivery (email/message/post/API call), first verify a supported workflow and target artifact path exist in the current repo/toolset. If action is unavailable, return `OUTCOME_NONE_UNSUPPORTED`; if an in-repo substitute might be acceptable but not explicit, return `OUTCOME_NONE_CLARIFICATION`. Also require message truthfulness: do not use completion verbs like \\\"sent/posted\\\" unless the corresponding mutation artifact was actually created in this run.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n        \"change_summary\": \"Insert 3-5 bullets in the completion/outcome section defining (1) external-action executability check, (2) mandatory fallback outcomes (`OUTCOME_NONE_UNSUPPORTED` vs `OUTCOME_NONE_CLARIFICATION`), and (3) prohibition on success-verb claims without mutation evidence.\"\n      }\n    ],\n    \"rollback\": \"Remove the newly added external-action executability/truthfulness bullets from `rules_versions/rv0046/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"Rule is channel-agnostic and evidence-based (artifact/workflow presence), avoiding task-specific literals, names, or paths beyond existing policy structures.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"reason\": \"Whitelisted active rules target; no normalization needed.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"N/A\",\n      \"final_path\": \"N/A\",\n      \"reason\": \"Code classification is optional and `proposal_code` is null.\"\n    }\n  ]\n}\ntokens used\n206\u00a0215\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T155543Z_43913/t04/attempt_20260409T155545Z_17f3e5",
+      "score": 0.0,
+      "passed": false
+    },
+    {
+      "task_id": "t05",
+      "status": "fail",
+      "fail_group": "capability_gap",
+      "diagnosis": "The agent produced a local `.ics` file and reported `OUTCOME_OK`, but scoring expected `OUTCOME_NONE_UNSUPPORTED` or `OUTCOME_NONE_CLARIFICATION`. Evidence shows a simulated completion path (`write` to `04_projects/weekly-planning-sync-priya-2032-08-02.ics` + `report_completion` with `OUTCOME_OK`) without any tool-backed external calendar action.",
+      "focus": {
+        "primary_task_id": "t05",
+        "problem": "Missing capability-boundary rule allowed a local file artifact to be treated as successful completion of an external calendar action.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t05"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Failure is policy/harness guidance related (outcome selection for unsupported external actions), not a proven runtime tool bug.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Add External-Action Capability Boundary Outcome Rule",
+        "hypothesis": "If rules explicitly forbid treating local artifact creation as completion of external side effects (calendar/email/chat scheduling), agents will choose `OUTCOME_NONE_UNSUPPORTED` (or `OUTCOME_NONE_CLARIFICATION` when parameters are missing) instead of false `OUTCOME_OK`.",
+        "change": "Add a compact rule block in active AGENTS: for requests requiring real external system effects, first verify available tools can execute and confirm that effect; if not, do not simulate success via local files, do not return `OUTCOME_OK`, and finalize with `OUTCOME_NONE_UNSUPPORTED` (or `OUTCOME_NONE_CLARIFICATION` if essential details are ambiguous).",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0046/AGENTS.md",
+            "change_summary": "Insert a short, general capability-boundary section near outcome-selection rules defining when external-action tasks must return non-OK outcomes and forbidding local-file simulation as proof of completion."
+          }
+        ],
+        "rollback": "Remove the added capability-boundary section from `rules_versions/rv0046/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "Rule applies broadly to any unsupported external side-effect request and avoids task-specific literals."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0046/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0046/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "idance related (outcome selection for unsupported external actions), not a proven runtime tool bug.\"\n  },\n  \"proposal_rules\": {\n    \"title\": \"Add External-Action Capability Boundary Outcome Rule\",\n    \"hypothesis\": \"If rules explicitly forbid treating local artifact creation as completion of external side effects (calendar/email/chat scheduling), agents will choose `OUTCOME_NONE_UNSUPPORTED` (or `OUTCOME_NONE_CLARIFICATION` when parameters are missing) instead of false `OUTCOME_OK`.\",\n    \"change\": \"Add a compact rule block in active AGENTS: for requests requiring real external system effects, first verify available tools can execute and confirm that effect; if not, do not simulate success via local files, do not return `OUTCOME_OK`, and finalize with `OUTCOME_NONE_UNSUPPORTED` (or `OUTCOME_NONE_CLARIFICATION` if essential details are ambiguous).\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n        \"change_summary\": \"Insert a short, general capability-boundary section near outcome-selection rules defining when external-action tasks must return non-OK outcomes and forbidding local-file simulation as proof of completion.\"\n      }\n    ],\n    \"rollback\": \"Remove the added capability-boundary section from `rules_versions/rv0046/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"Rule applies broadly to any unsupported external side-effect request and avoids task-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"reason\": \"Path is whitelisted and already normalized to the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": "ome selection for unsupported external actions), not a proven runtime tool bug.\"\n  },\n  \"proposal_rules\": {\n    \"title\": \"Add External-Action Capability Boundary Outcome Rule\",\n    \"hypothesis\": \"If rules explicitly forbid treating local artifact creation as completion of external side effects (calendar/email/chat scheduling), agents will choose `OUTCOME_NONE_UNSUPPORTED` (or `OUTCOME_NONE_CLARIFICATION` when parameters are missing) instead of false `OUTCOME_OK`.\",\n    \"change\": \"Add a compact rule block in active AGENTS: for requests requiring real external system effects, first verify available tools can execute and confirm that effect; if not, do not simulate success via local files, do not return `OUTCOME_OK`, and finalize with `OUTCOME_NONE_UNSUPPORTED` (or `OUTCOME_NONE_CLARIFICATION` if essential details are ambiguous).\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n        \"change_summary\": \"Insert a short, general capability-boundary section near outcome-selection rules defining when external-action tasks must return non-OK outcomes and forbidding local-file simulation as proof of completion.\"\n      }\n    ],\n    \"rollback\": \"Remove the added capability-boundary section from `rules_versions/rv0046/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"Rule applies broadly to any unsupported external side-effect request and avoids task-specific literals.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0046/AGENTS.md\",\n      \"reason\": \"Path is whitelisted and already normalized to the active rules version.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n141\u00a0713\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T155543Z_43913/t05/attempt_20260409T155544Z_fd74b4",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

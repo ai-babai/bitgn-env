@@ -48,6 +48,10 @@ INSTR_DIR = ROOT / "docs" / "instructions"
 PROMPT_POLICY_PATH = INSTR_DIR / "codex-analyzer-prompt.md"
 OUTPUT_CONTRACT_PATH = INSTR_DIR / "output-contract.md"
 FOCUS_CONTRACT_PATH = INSTR_DIR / "focus-cycle-contract.md"
+TARGET_PATH_POLICY_PATH = INSTR_DIR / "target-path-policy.md"
+HARNESS_STRUCTURE_REF_PATH = (
+    ROOT / "docs" / "references" / "harness-engineering-structure-draft.md"
+)
 PROMPTS_DIR = INSTR_DIR / "prompts"
 ANALYZE_PREAMBLE_PATH = PROMPTS_DIR / "analyze-preamble.md"
 APPLY_PREAMBLE_PATH = PROMPTS_DIR / "apply-preamble.md"
@@ -62,6 +66,8 @@ NATIVE_RULES_TARGET = (
     ROOT.parent / "codex-agent-native" / "local-rules" / "AGENTS.md"
 ).resolve()
 NATIVE_RULES_DIR = NATIVE_RULES_TARGET.parent
+CODEX_PROFILE = (os.getenv("CODEX_PROFILE") or "").strip()
+CODEX_BACKEND = (os.getenv("CODEX_BACKEND") or "omniroute").strip().lower()
 
 ALLOWED_CODE_TARGETS = {
     "codex-agent-native/runner.py",
@@ -78,6 +84,13 @@ CODE_TARGET_ALIASES = {
     "workspace.py": "codex-agent-native/workspace.py",
     "harness_seed.py": "codex-agent-native/harness_seed.py",
 }
+
+RUNTIME_MAX_AGENTS_LINES = 100
+RUNTIME_SOFT_AGENTS_LINES = 95
+RUNTIME_MAX_INCLUDE_FILES = 8
+RUNTIME_MAX_INCLUDE_FILE_LINES = 80
+RUNTIME_MAX_INCLUDE_TOTAL_LINES = 220
+_RULES_INCLUDE_RE = re.compile(r"^\s*!include\s+([A-Za-z0-9_./-]+)\s*$")
 
 
 def _read_doc(path: Path, fallback: str) -> str:
@@ -112,6 +125,83 @@ def _sha256_file(path: Path) -> str:
     if not path.exists():
         return ""
     return _sha256_text(path.read_text(encoding="utf-8"))
+
+
+def _normalize_rules_include_path(raw: str) -> str:
+    value = str(raw or "").strip().replace("\\", "/")
+    while value.startswith("./"):
+        value = value[2:]
+    if not value:
+        raise ValueError("Empty include path")
+    if value.startswith("/"):
+        raise ValueError(f"Include path must be relative: {value}")
+
+    p = Path(value)
+    if any(part in {"", ".", ".."} for part in p.parts):
+        raise ValueError(f"Invalid include path segments: {value}")
+    if not p.parts or p.parts[0] != "includes":
+        raise ValueError(f"Include path must stay under includes/: {value}")
+    if p.suffix.lower() != ".md":
+        raise ValueError(f"Include path must target .md file: {value}")
+    if any(part.startswith("._") for part in p.parts):
+        raise ValueError(f"Include path cannot use macOS metadata files: {value}")
+    return p.as_posix()
+
+
+def _extract_rules_include_paths(agents_text: str) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for line in agents_text.splitlines():
+        m = _RULES_INCLUDE_RE.match(line)
+        if not m:
+            continue
+        rel = _normalize_rules_include_path(m.group(1))
+        if rel in seen:
+            continue
+        seen.add(rel)
+        out.append(rel)
+    return out
+
+
+def _validate_runtime_rules_package(
+    *, agents_text: str, include_files: dict[str, str]
+) -> dict[str, int]:
+    agents_lines = len(agents_text.splitlines())
+    if agents_lines > RUNTIME_MAX_AGENTS_LINES:
+        raise SystemExit(
+            f"apply rejected: AGENTS.md exceeds {RUNTIME_MAX_AGENTS_LINES} lines ({agents_lines})"
+        )
+
+    include_paths = _extract_rules_include_paths(agents_text)
+    if len(include_paths) > RUNTIME_MAX_INCLUDE_FILES:
+        raise SystemExit(
+            f"apply rejected: include files exceed {RUNTIME_MAX_INCLUDE_FILES} ({len(include_paths)})"
+        )
+
+    total_include_lines = 0
+    for rel in include_paths:
+        content = include_files.get(rel)
+        if content is None:
+            raise SystemExit(f"apply rejected: missing include content for {rel}")
+        include_lines = len(content.splitlines())
+        if include_lines > RUNTIME_MAX_INCLUDE_FILE_LINES:
+            raise SystemExit(
+                f"apply rejected: include exceeds {RUNTIME_MAX_INCLUDE_FILE_LINES} lines ({rel}: {include_lines})"
+            )
+        if any(_RULES_INCLUDE_RE.match(line) for line in content.splitlines()):
+            raise SystemExit(f"apply rejected: nested include directive not allowed in {rel}")
+        total_include_lines += include_lines
+
+    if total_include_lines > RUNTIME_MAX_INCLUDE_TOTAL_LINES:
+        raise SystemExit(
+            f"apply rejected: include total exceeds {RUNTIME_MAX_INCLUDE_TOTAL_LINES} lines ({total_include_lines})"
+        )
+
+    return {
+        "agents_lines": agents_lines,
+        "includes_count": len(include_paths),
+        "includes_total_lines": total_include_lines,
+    }
 
 
 def _next_rules_version() -> str:
@@ -165,6 +255,15 @@ def _strip_code_fence(text: str) -> str:
     return raw
 
 
+def _normalize_text_payload(value: str) -> str:
+    text = str(value)
+    if "\\n" in text and "\n" not in text:
+        text = text.replace("\\r\\n", "\n").replace("\\n", "\n")
+    if "\\\"" in text and '"' not in text:
+        text = text.replace('\\\"', '"')
+    return text
+
+
 def _count_changed_lines(before: str, after: str) -> int:
     before_lines = before.splitlines()
     after_lines = after.splitlines()
@@ -213,12 +312,17 @@ def _coerce_apply_payload(raw_text: str) -> dict[str, Any]:
         agents = parsed.get("agents_md")
         if isinstance(agents, str) and agents.strip():
             payload = {
-                "agents_md": agents.strip(),
+                "agents_md": _normalize_text_payload(agents).strip(),
                 "extra_files": parsed.get("extra_files", []),
+                "harness_docs": parsed.get("harness_docs", []),
             }
             return payload
 
-    return {"agents_md": text, "extra_files": []}
+    return {
+        "agents_md": _normalize_text_payload(text),
+        "extra_files": [],
+        "harness_docs": [],
+    }
 
 
 def _normalize_rules_extra_files(raw: Any) -> list[dict[str, str]]:
@@ -232,6 +336,7 @@ def _normalize_rules_extra_files(raw: Any) -> list[dict[str, str]]:
         content = item.get("content", "")
         if not isinstance(content, str):
             continue
+        content = _normalize_text_payload(content)
         if not rel or rel in seen:
             continue
         if rel.startswith("/") or rel.startswith("../"):
@@ -259,11 +364,54 @@ def _normalize_rules_extra_files(raw: Any) -> list[dict[str, str]]:
     return out
 
 
+def _normalize_harness_doc_files(raw: Any) -> list[dict[str, str]]:
+    items = raw if isinstance(raw, list) else []
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        rel = _clean_path(str(item.get("path", "")))
+        content = item.get("content", "")
+        if not isinstance(content, str):
+            continue
+        content = _normalize_text_payload(content)
+        if not rel:
+            continue
+
+        if rel.startswith("/") or rel.startswith("../"):
+            continue
+
+        if rel.startswith("codex-agent-analytics/"):
+            rel = rel[len("codex-agent-analytics/") :]
+
+        if rel in seen:
+            continue
+        if rel != "ARCHITECTURE.md" and not rel.startswith("docs/"):
+            continue
+        if ".." in Path(rel).parts:
+            continue
+        if not (rel.endswith(".md") or rel.endswith(".txt")):
+            continue
+
+        promoted = f"codex-agent-analytics/{rel}"
+        if not _is_harness_structure_doc_target(promoted):
+            continue
+
+        seen.add(rel)
+        out.append({"path": rel, "content": content.rstrip() + "\n"})
+
+    return out
+
+
 def _changed_lines_for_rules_package(
     before_agents: str,
     after_agents: str,
     before_extra: dict[str, str],
     after_extra: dict[str, str],
+    before_harness_docs: dict[str, str] | None = None,
+    after_harness_docs: dict[str, str] | None = None,
 ) -> int:
     changed = _count_changed_lines(before_agents, after_agents)
     keys = set(before_extra.keys()) | set(after_extra.keys())
@@ -271,6 +419,14 @@ def _changed_lines_for_rules_package(
         changed += _count_changed_lines(
             before_extra.get(key, ""), after_extra.get(key, "")
         )
+    if before_harness_docs is not None or after_harness_docs is not None:
+        docs_before = before_harness_docs or {}
+        docs_after = after_harness_docs or {}
+        doc_keys = set(docs_before.keys()) | set(docs_after.keys())
+        for key in sorted(doc_keys):
+            changed += _count_changed_lines(
+                docs_before.get(key, ""), docs_after.get(key, "")
+            )
     return changed
 
 
@@ -286,6 +442,23 @@ def _rules_version_extra_files(version_dir: Path) -> dict[str, str]:
             continue
         rel = p.relative_to(version_dir).as_posix()
         out[rel] = p.read_text(encoding="utf-8")
+    return out
+
+
+def _existing_harness_doc_paths() -> list[str]:
+    out: list[str] = []
+    arch = ROOT / "ARCHITECTURE.md"
+    if arch.exists():
+        out.append("ARCHITECTURE.md")
+
+    docs_root = ROOT / "docs"
+    if docs_root.exists():
+        for p in sorted(docs_root.rglob("*")):
+            if not p.is_file():
+                continue
+            rel = p.relative_to(ROOT).as_posix()
+            if _is_harness_structure_doc_target(f"codex-agent-analytics/{rel}"):
+                out.append(rel)
     return out
 
 
@@ -318,9 +491,38 @@ def _instruction_doc_targets() -> set[str]:
     out: set[str] = set()
     if not INSTR_DIR.exists():
         return out
-    for p in INSTR_DIR.glob("*.md"):
-        out.add(f"codex-agent-analytics/docs/instructions/{p.name}")
+    for p in INSTR_DIR.rglob("*.md"):
+        rel = p.relative_to(INSTR_DIR).as_posix()
+        out.add(f"codex-agent-analytics/docs/instructions/{rel}")
     return out
+
+
+def _is_harness_structure_doc_target(path: str) -> bool:
+    candidate = _clean_path(path)
+    if not candidate:
+        return False
+
+    exact = {
+        "codex-agent-analytics/ARCHITECTURE.md",
+        "codex-agent-analytics/docs/DESIGN.md",
+        "codex-agent-analytics/docs/FRONTEND.md",
+        "codex-agent-analytics/docs/PLANS.md",
+        "codex-agent-analytics/docs/PRODUCT_SENSE.md",
+        "codex-agent-analytics/docs/QUALITY_SCORE.md",
+        "codex-agent-analytics/docs/RELIABILITY.md",
+        "codex-agent-analytics/docs/SECURITY.md",
+    }
+    if candidate in exact:
+        return True
+
+    prefixes = (
+        "codex-agent-analytics/docs/design-docs/",
+        "codex-agent-analytics/docs/exec-plans/",
+        "codex-agent-analytics/docs/generated/",
+        "codex-agent-analytics/docs/product-specs/",
+        "codex-agent-analytics/docs/references/",
+    )
+    return any(candidate.startswith(prefix) for prefix in prefixes)
 
 
 def _clean_path(raw: str) -> str:
@@ -383,13 +585,13 @@ def _normalize_rules_targets(
         elif "/includes/" in candidate and candidate.endswith(".md"):
             rel_include = ""
             if candidate.startswith("rules_versions/"):
-                parts = candidate.split("/", 2)
-                if len(parts) == 3:
-                    rel_include = _normalize_include_rel(parts[2])
+                tail = candidate[len("rules_versions/") :]
+                _, _, rest = tail.partition("/")
+                rel_include = _normalize_include_rel(rest)
             elif candidate.startswith("codex-agent-analytics/rules_versions/"):
-                parts = candidate.split("/", 4)
-                if len(parts) == 5:
-                    rel_include = _normalize_include_rel(parts[4])
+                tail = candidate[len("codex-agent-analytics/rules_versions/") :]
+                _, _, rest = tail.partition("/")
+                rel_include = _normalize_include_rel(rest)
             elif candidate.startswith("includes/"):
                 rel_include = _normalize_include_rel(candidate)
 
@@ -412,7 +614,7 @@ def _normalize_rules_targets(
             if promoted in allowed_docs:
                 final_path = promoted
                 status = "accepted"
-                reason = "existing instruction doc"
+                reason = "existing instruction doc target"
             else:
                 final_path = default_target
                 status = "normalized"
@@ -421,11 +623,34 @@ def _normalize_rules_targets(
             if candidate in allowed_docs:
                 final_path = candidate
                 status = "accepted"
-                reason = "existing instruction doc"
+                reason = "existing instruction doc target"
             else:
                 final_path = default_target
                 status = "normalized"
                 reason = "instruction path missing; normalized to active rules AGENTS"
+        elif candidate == "ARCHITECTURE.md" or candidate.startswith("docs/"):
+            promoted = (
+                "codex-agent-analytics/ARCHITECTURE.md"
+                if candidate == "ARCHITECTURE.md"
+                else f"codex-agent-analytics/{candidate}"
+            )
+            if _is_harness_structure_doc_target(promoted):
+                final_path = promoted
+                status = "accepted"
+                reason = "allowed harness-structure doc target"
+            else:
+                final_path = default_target
+                status = "normalized"
+                reason = "docs path outside harness map; normalized to active rules AGENTS"
+        elif candidate.startswith("codex-agent-analytics/docs/") or candidate == "codex-agent-analytics/ARCHITECTURE.md":
+            if _is_harness_structure_doc_target(candidate):
+                final_path = candidate
+                status = "accepted"
+                reason = "allowed harness-structure doc target"
+            else:
+                final_path = default_target
+                status = "normalized"
+                reason = "docs path outside harness map; normalized to active rules AGENTS"
         elif candidate == default_target:
             final_path = candidate
             status = "accepted"
@@ -579,6 +804,14 @@ def _build_prompt(task: RunTask) -> str:
         FOCUS_CONTRACT_PATH,
         "One run should support one focus cycle with primary task and affected tasks.",
     )
+    target_path_policy_md = _read_doc(
+        TARGET_PATH_POLICY_PATH,
+        "Rules targets: active rules AGENTS/includes and instruction docs.",
+    )
+    harness_structure_ref_md = _read_doc(
+        HARNESS_STRUCTURE_REF_PATH,
+        "Harness structure map reference is unavailable.",
+    )
     mode_preamble = _mode_preamble("analyze")
 
     return (
@@ -589,6 +822,10 @@ def _build_prompt(task: RunTask) -> str:
         f"{policy_md}\n\n"
         "Focus-cycle contract (markdown):\n"
         f"{focus_contract_md}\n\n"
+        "Target path policy (markdown):\n"
+        f"{target_path_policy_md}\n\n"
+        "Harness structure reference map (markdown):\n"
+        f"{harness_structure_ref_md}\n\n"
         "Output contract (markdown):\n"
         f"{output_contract_md}\n\n"
         f"Task id: {task.task_id}\n"
@@ -614,10 +851,16 @@ def _run_codex_analysis(task: RunTask, model: str) -> dict[str, Any]:
         str(out_path),
         "--model",
         model,
+    ]
+    if CODEX_PROFILE:
+        cmd.extend(["--profile", CODEX_PROFILE])
+    elif CODEX_BACKEND == "spark":
+        cmd.extend(["-c", "model_provider=openai"])
+    cmd.extend([
         "--cd",
         str(ROOT),
         prompt,
-    ]
+    ])
 
     proc = subprocess.run(cmd, text=True, capture_output=True)
     text = ""
@@ -1134,20 +1377,30 @@ def run_apply(args: argparse.Namespace) -> None:
 
     before_text = source_agents.read_text(encoding="utf-8")
     before_extra_files = _rules_version_extra_files(source_dir)
+    before_harness_docs: dict[str, str] = {}
+    for rel in _existing_harness_doc_paths():
+        p = ROOT / rel
+        if p.exists() and p.is_file():
+            before_harness_docs[rel] = p.read_text(encoding="utf-8")
+
     prompt = (
         "Execution mode: apply\n"
         f"{mode_preamble}\n\n"
-        "Apply exactly one focused rules change to AGENTS.md.\n"
+        "Apply exactly one focused rules-package change (AGENTS.md + optional include/harness file).\n"
         "Do not include task ids or task-specific literals.\n"
         "Keep change small and reversible (<= 30 changed lines preferred).\n"
+        f"Hard runtime limit: AGENTS.md must stay <= {RUNTIME_MAX_AGENTS_LINES} lines.\n"
+        f"Soft budget: when AGENTS.md would exceed {RUNTIME_SOFT_AGENTS_LINES} lines, move details to includes/*.md or one harness doc.\n"
         "Return JSON only with fields:\n"
         "- agents_md: full updated AGENTS.md content\n"
         "- extra_files: optional list of {path, content} where path is under includes/*.md\n"
+        "- harness_docs: optional list of {path, content} where path follows harness structure map under docs/** or ARCHITECTURE.md\n"
         "Keep AGENTS.md concise and move details into includes only when necessary.\n\n"
         f"Current rules version: {current_version}\n"
         f"Target rules version: {to_version}\n"
         f"Proposal path: {proposal_path}\n\n"
         f"Current include files json:\n{json.dumps(before_extra_files, ensure_ascii=True, indent=2)}\n\n"
+        f"Current harness docs paths json:\n{json.dumps(sorted(before_harness_docs.keys()), ensure_ascii=True, indent=2)}\n\n"
         "Proposal content:\n"
         f"{proposal_text}\n\n"
         "Current AGENTS.md:\n"
@@ -1164,10 +1417,16 @@ def run_apply(args: argparse.Namespace) -> None:
         str(out_path),
         "--model",
         model,
+    ]
+    if CODEX_PROFILE:
+        cmd.extend(["--profile", CODEX_PROFILE])
+    elif CODEX_BACKEND == "spark":
+        cmd.extend(["-c", "model_provider=openai"])
+    cmd.extend([
         "--cd",
         str(ROOT),
         prompt,
-    ]
+    ])
     proc = subprocess.run(cmd, text=True, capture_output=True)
     updated_text = ""
     if out_path.exists():
@@ -1177,22 +1436,63 @@ def run_apply(args: argparse.Namespace) -> None:
     payload = _coerce_apply_payload(updated_text)
     updated_agents = str(payload.get("agents_md", "")).strip()
     extra_files = _normalize_rules_extra_files(payload.get("extra_files", []))
+    harness_docs = _normalize_harness_doc_files(payload.get("harness_docs", []))
     if not updated_agents:
         raise SystemExit("apply failed: empty model output")
 
-    after_extra_files = {item["path"]: item["content"] for item in extra_files}
+    after_extra_files = dict(before_extra_files)
+    if extra_files:
+        for item in extra_files:
+            after_extra_files[item["path"]] = item["content"]
+    after_harness_docs = {item["path"]: item["content"] for item in harness_docs}
+    before_selected_harness_docs = {
+        rel: before_harness_docs.get(rel, "") for rel in after_harness_docs.keys()
+    }
+    runtime_stats = _validate_runtime_rules_package(
+        agents_text=updated_agents, include_files=after_extra_files
+    )
     changed_lines = _changed_lines_for_rules_package(
         before_agents=before_text,
         after_agents=updated_agents,
         before_extra=before_extra_files,
         after_extra=after_extra_files,
+        before_harness_docs=before_selected_harness_docs,
+        after_harness_docs=after_harness_docs,
     )
-    includes_count = len(after_extra_files)
-    changed_limit = 80 if includes_count == 0 else 100
+    changed_include_paths = sorted(
+        key
+        for key in (set(before_extra_files.keys()) | set(after_extra_files.keys()))
+        if before_extra_files.get(key, "") != after_extra_files.get(key, "")
+    )
+    changed_harness_docs_paths = sorted(
+        key
+        for key in (set(before_selected_harness_docs.keys()) | set(after_harness_docs.keys()))
+        if before_selected_harness_docs.get(key, "") != after_harness_docs.get(key, "")
+    )
+
+    includes_count = runtime_stats["includes_count"]
+    includes_total_lines = runtime_stats["includes_total_lines"]
+    agents_line_count = runtime_stats["agents_lines"]
+    harness_docs_count = len(after_harness_docs)
+    changed_limit = 220 if harness_docs_count > 0 else (100 if includes_count == 0 else 120)
     if changed_lines > changed_limit:
         raise SystemExit(f"apply rejected: changed lines too large ({changed_lines})")
-    if includes_count > 1:
-        raise SystemExit(f"apply rejected: too many include files ({includes_count})")
+    if len(changed_include_paths) > 1:
+        raise SystemExit(
+            f"apply rejected: too many changed include files ({len(changed_include_paths)})"
+        )
+    if len(changed_harness_docs_paths) > 1:
+        raise SystemExit(
+            f"apply rejected: too many changed harness docs in one cycle ({len(changed_harness_docs_paths)})"
+        )
+    if (
+        agents_line_count > RUNTIME_SOFT_AGENTS_LINES
+        and not changed_include_paths
+        and not changed_harness_docs_paths
+    ):
+        raise SystemExit(
+            f"apply rejected: AGENTS.md is {agents_line_count} lines (> {RUNTIME_SOFT_AGENTS_LINES}) without offloading to include/harness docs"
+        )
 
     ts = now_iso()
     apply_id = next_numbered_path(APPLIES_DIR, "a", ".md")
@@ -1204,6 +1504,8 @@ def run_apply(args: argparse.Namespace) -> None:
         updated_agents
         + "\n"
         + "\n".join(f"{k}\n{v}" for k, v in sorted(after_extra_files.items()))
+        + "\n"
+        + "\n".join(f"{k}\n{v}" for k, v in sorted(after_harness_docs.items()))
     )
     to_hash = _sha256_text(package_text)
 
@@ -1223,7 +1525,10 @@ def run_apply(args: argparse.Namespace) -> None:
             f"- changed_lines_estimate: {changed_lines}",
             f"- from_hash: {from_hash}",
             f"- to_hash: {to_hash}",
-            f"- includes_count: {len(after_extra_files)}",
+            f"- agents_line_count: {agents_line_count}",
+            f"- includes_count: {includes_count}",
+            f"- includes_total_lines: {includes_total_lines}",
+            f"- harness_docs_count: {len(after_harness_docs)}",
         ]
         write_text(apply_id, "\n".join(apply_md).strip() + "\n")
         update_index()
@@ -1242,6 +1547,12 @@ def run_apply(args: argparse.Namespace) -> None:
         p = target_dir / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(content, encoding="utf-8")
+
+    for rel, content in after_harness_docs.items():
+        p = ROOT / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(content, encoding="utf-8")
+
     RULES_ACTIVE_VERSION.write_text(to_version + "\n", encoding="utf-8")
 
     apply_row = {
@@ -1259,6 +1570,12 @@ def run_apply(args: argparse.Namespace) -> None:
         "status": "applied",
         "includes_count": len(after_extra_files),
         "includes_paths": sorted(after_extra_files.keys()),
+        "agents_line_count": agents_line_count,
+        "includes_total_lines": includes_total_lines,
+        "changed_include_paths": changed_include_paths,
+        "harness_docs_count": len(after_harness_docs),
+        "harness_docs_paths": sorted(after_harness_docs.keys()),
+        "changed_harness_docs_paths": changed_harness_docs_paths,
     }
     append_jsonl(APPLY_LOG_PATH, apply_row)
     append_jsonl(RULES_CHANGELOG, apply_row)
@@ -1280,12 +1597,19 @@ def run_apply(args: argparse.Namespace) -> None:
         f"- from_hash: {from_hash}",
         f"- to_hash: {to_hash}",
         f"- updated_file: `{target_agents}`",
-        f"- includes_count: {len(after_extra_files)}",
+        f"- agents_line_count: {agents_line_count}",
+        f"- includes_count: {includes_count}",
+        f"- includes_total_lines: {includes_total_lines}",
+        f"- harness_docs_count: {len(after_harness_docs)}",
     ]
-    if after_extra_files:
+    if changed_include_paths:
         apply_md.append("- includes_files:")
-        for rel in sorted(after_extra_files.keys()):
+        for rel in changed_include_paths:
             apply_md.append(f"  - `{target_dir / rel}`")
+    if changed_harness_docs_paths:
+        apply_md.append("- harness_docs_files:")
+        for rel in changed_harness_docs_paths:
+            apply_md.append(f"  - `{ROOT / rel}`")
     write_text(apply_id, "\n".join(apply_md).strip() + "\n")
 
     update_index()
@@ -1311,6 +1635,14 @@ def run_deploy(args: argparse.Namespace) -> None:
     force_yes = bool(getattr(args, "yes", False))
 
     source_text = source.read_text(encoding="utf-8")
+    source_extra_files = _rules_version_extra_files(source_dir)
+    runtime_stats = _validate_runtime_rules_package(
+        agents_text=source_text,
+        include_files=source_extra_files,
+    )
+    source_agents_lines = runtime_stats["agents_lines"]
+    source_includes_count = runtime_stats["includes_count"]
+    source_includes_total_lines = runtime_stats["includes_total_lines"]
     source_hash = _sha256_text(source_text)
     source_tree_hash = _sha256_text(
         "\n".join(
@@ -1339,6 +1671,9 @@ def run_deploy(args: argparse.Namespace) -> None:
             f"- target_dir: `{target_dir}`",
             f"- source_hash: {source_hash}",
             f"- source_tree_hash: {source_tree_hash}",
+            f"- source_agents_lines: {source_agents_lines}",
+            f"- source_includes_count: {source_includes_count}",
+            f"- source_includes_total_lines: {source_includes_total_lines}",
             f"- target_hash_before: {target_hash_before}",
             "- note: use --yes (and without --dry-run) to apply deploy",
         ]
@@ -1368,6 +1703,9 @@ def run_deploy(args: argparse.Namespace) -> None:
         "backup": str(backup_path) if backup_path.exists() else "",
         "source_hash": source_hash,
         "source_tree_hash": source_tree_hash,
+        "source_agents_lines": source_agents_lines,
+        "source_includes_count": source_includes_count,
+        "source_includes_total_lines": source_includes_total_lines,
         "target_hash_before": target_hash_before,
         "target_hash_after": target_hash_after,
         "status": "deployed",
@@ -1387,6 +1725,9 @@ def run_deploy(args: argparse.Namespace) -> None:
         f"- backup: `{backup_path}`",
         f"- source_hash: {source_hash}",
         f"- source_tree_hash: {source_tree_hash}",
+        f"- source_agents_lines: {source_agents_lines}",
+        f"- source_includes_count: {source_includes_count}",
+        f"- source_includes_total_lines: {source_includes_total_lines}",
         f"- target_hash_before: {target_hash_before}",
         f"- target_hash_after: {target_hash_after}",
         "- deploy_mode: full_replace_local_rules_dir",

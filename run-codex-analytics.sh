@@ -49,13 +49,17 @@ else
   export AGENT_ENV="sandbox"
 fi
 
+if ! bitgn_prepare_codex_backend; then
+  exit 1
+fi
+
 NEEDS_CODEX=1
 if [[ "$MODE" == "deploy" ]]; then
   NEEDS_CODEX=0
 fi
 
 if [[ $NEEDS_CODEX -eq 1 ]]; then
-  if ! bitgn_require_omniroute_key; then
+  if ! bitgn_prepare_codex_auth; then
     exit 1
   fi
 fi
@@ -63,7 +67,7 @@ fi
 cd "$APP_DIR"
 
 if [[ $NEEDS_CODEX -eq 1 ]]; then
-  OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" uv run python cli.py "$MODE" "$@"
+  OMNIROUTE_API_KEY="${OMNIROUTE_API_KEY:-}" CODEX_MODEL="$MODEL" CODEX_PROFILE="${CODEX_PROFILE:-}" CODEX_BACKEND="${CODEX_BACKEND:-omniroute}" uv run python cli.py "$MODE" "$@"
 else
-  CODEX_MODEL="$MODEL" uv run python cli.py "$MODE" "$@"
+  CODEX_MODEL="$MODEL" CODEX_PROFILE="${CODEX_PROFILE:-}" CODEX_BACKEND="${CODEX_BACKEND:-omniroute}" uv run python cli.py "$MODE" "$@"
 fi

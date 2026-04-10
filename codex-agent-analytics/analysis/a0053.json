@@ -1,0 +1,81 @@
+{
+  "ts": "2026-04-09T21:20:10.372111+00:00",
+  "local_run_id": "local_run_20260409T205607Z_88823",
+  "model": "gpt-5.3-codex",
+  "parallelism": 1,
+  "task_count": 1,
+  "rules_version": "rv0052",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t21",
+    "affected_tasks": [
+      "t21"
+    ],
+    "problem": "Task t21 fails with fail_group=mandatory_literal_conflict_not_escalated. The run read trusted docs that imposed conflicting exact literals for the same required artifact, but still performed writes and finished with `OUTCOME_OK`. Trace evidence shows both mandatory sources were read before mutation, then `inbox/inbox.md` and `result.txt` were written without escalation, while scoring expected `OUTCOME_NONE_CLARIFICATION`.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t21",
+      "status": "fail",
+      "fail_group": "mandatory_literal_conflict_not_escalated",
+      "diagnosis": "The run read trusted docs that imposed conflicting exact literals for the same required artifact, but still performed writes and finished with `OUTCOME_OK`. Trace evidence shows both mandatory sources were read before mutation, then `inbox/inbox.md` and `result.txt` were written without escalation, while scoring expected `OUTCOME_NONE_CLARIFICATION`.",
+      "focus": {
+        "primary_task_id": "t21",
+        "problem": "Mandatory-literal precedence conflicts are not being enforced deterministically for actionable queue workflows, allowing `OUTCOME_OK` after conflicting trusted requirements.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t21"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "This is a policy-execution reliability gap in harness guidance, not a proven runtime/tooling defect. Existing tools returned required evidence correctly; the missed step is a rules-following gate.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Promote Mandatory Literal Conflict Gate To Universal Prewrite Include",
+        "hypothesis": "If mandatory literal-conflict handling is moved into a single explicit prewrite include applied to all write-capable workflows (not only review/check phrasing), the agent will consistently route ambiguous precedence cases to clarification before mutation.",
+        "change": "Refactor conflict handling into one deterministic include and require that include before first write for any actionable workflow (including queue/process-inbox variants), plus a final re-check before completion when required artifacts are involved.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0052/AGENTS.md",
+            "change_summary": "Replace the current dense conflict bullets with a compact directive that mandates executing a dedicated mandatory-literal conflict include before any write-capable workflow and before finalization when required artifacts exist."
+          }
+        ],
+        "rollback": "Revert the AGENTS directive change and remove the new include file, restoring the prior inline conflict bullets.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule depends only on generic trusted-source literal conflicts per target artifact and does not encode task IDs, fixed literals, or one-off paths."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0052/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0052/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        },
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0052/includes/mandatory-literal-conflict-gate.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0052/AGENTS.md",
+          "reason": "invalid include path; normalized to active rules AGENTS"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "\"path\": \"codex-agent-analytics/rules_versions/rv0052/AGENTS.md\",\n        \"change_summary\": \"Replace the current dense conflict bullets with a compact directive that mandates executing a dedicated mandatory-literal conflict include before any write-capable workflow and before finalization when required artifacts exist.\"\n      },\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0052/includes/mandatory-literal-conflict-gate.md\",\n        \"change_summary\": \"Add a short deterministic checklist: collect trusted `target_path + exact_required_literal`; if one path has multiple literals without explicit precedence, block all writes, return `OUTCOME_NONE_CLARIFICATION`, ask minimal precedence question, and require conflicting trusted refs.\"\n      }\n    ],\n    \"rollback\": \"Revert the AGENTS directive change and remove the new include file, restoring the prior inline conflict bullets.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule depends only on generic trusted-source literal conflicts per target artifact and does not encode task IDs, fixed literals, or one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0052/AGENTS.md\",\n      \"reason\": \"Resolved `<active>` to current active version `rv0052`.\"\n    },\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/includes/mandatory-literal-conflict-gate.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0052/includes/mandatory-literal-conflict-gate.md\",\n      \"reason\": \"Resolved `<active>` to current active version `rv0052`; include path is within whitelist.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\n",
+      "_codex_stderr_tail": "-analytics/rules_versions/rv0052/AGENTS.md\",\n        \"change_summary\": \"Replace the current dense conflict bullets with a compact directive that mandates executing a dedicated mandatory-literal conflict include before any write-capable workflow and before finalization when required artifacts exist.\"\n      },\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0052/includes/mandatory-literal-conflict-gate.md\",\n        \"change_summary\": \"Add a short deterministic checklist: collect trusted `target_path + exact_required_literal`; if one path has multiple literals without explicit precedence, block all writes, return `OUTCOME_NONE_CLARIFICATION`, ask minimal precedence question, and require conflicting trusted refs.\"\n      }\n    ],\n    \"rollback\": \"Revert the AGENTS directive change and remove the new include file, restoring the prior inline conflict bullets.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule depends only on generic trusted-source literal conflicts per target artifact and does not encode task IDs, fixed literals, or one-off paths.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0052/AGENTS.md\",\n      \"reason\": \"Resolved `<active>` to current active version `rv0052`.\"\n    },\n    {\n      \"status\": \"normalized\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/<active>/includes/mandatory-literal-conflict-gate.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0052/includes/mandatory-literal-conflict-gate.md\",\n      \"reason\": \"Resolved `<active>` to current active version `rv0052`; include path is within whitelist.\"\n    }\n  ],\n  \"code_target_validation\": []\n}\ntokens used\n270\u00a0458\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T205607Z_88823/t21/attempt_20260409T205607Z_f0cdcf",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

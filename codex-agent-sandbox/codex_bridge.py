@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -46,10 +47,18 @@ DECISION_SCHEMA: dict[str, object] = {
 
 
 class CodexBridge:
-    def __init__(self, model: str, workdir: str, timeout_sec: int = 180) -> None:
+    def __init__(
+        self,
+        model: str,
+        workdir: str,
+        timeout_sec: int = 180,
+        profile: str = "",
+    ) -> None:
         self.model = model
         self.workdir = workdir
         self.timeout_sec = timeout_sec
+        self.profile = profile.strip()
+        self.backend = (os.getenv("CODEX_BACKEND") or "omniroute").strip().lower()
 
     def decide(self, prompt: str, schema: dict[str, object] | None = None) -> tuple[dict[str, object], dict[str, int | None]]:
         with tempfile.TemporaryDirectory(prefix="codex-bridge-") as temp_dir:
@@ -71,10 +80,16 @@ class CodexBridge:
                 "--json",
                 "--model",
                 self.model,
+            ]
+            if self.profile:
+                cmd.extend(["--profile", self.profile])
+            elif self.backend == "spark":
+                cmd.extend(["-c", "model_provider=openai"])
+            cmd.extend([
                 "--cd",
                 self.workdir,
                 prompt,
-            ]
+            ])
 
             try:
                 proc = subprocess.run(
@@ -97,10 +112,16 @@ class CodexBridge:
                     "--json",
                     "--model",
                     self.model,
+                ]
+                if self.profile:
+                    fallback_cmd.extend(["--profile", self.profile])
+                elif self.backend == "spark":
+                    fallback_cmd.extend(["-c", "model_provider=openai"])
+                fallback_cmd.extend([
                     "--cd",
                     self.workdir,
                     prompt + "\nReturn only one valid JSON object that follows the described tool contract.",
-                ]
+                ])
                 proc = subprocess.run(
                     fallback_cmd,
                     check=True,

@@ -361,6 +361,13 @@ def update_index() -> None:
     lines.append(
         "- [docs/references/harness-engineering-structure-draft.md](docs/references/harness-engineering-structure-draft.md)"
     )
+    lines.append("- [docs/references/pac1-failure-patterns.md](docs/references/pac1-failure-patterns.md)")
+    lines.append("")
+
+    lines.append("## Harness Structure")
+    lines.append("- [docs/design-docs/index.md](docs/design-docs/index.md)")
+    lines.append("- [docs/exec-plans/index.md](docs/exec-plans/index.md)")
+    lines.append("- [docs/product-specs/index.md](docs/product-specs/index.md)")
     lines.append("")
 
     write_text(INDEX_PATH, "\n".join(lines).strip() + "\n")

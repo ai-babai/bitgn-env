@@ -53,6 +53,7 @@ BITGN_URL = os.getenv("BENCHMARK_HOST") or "https://api.bitgn.com"
 BENCHMARK_ID = os.getenv("BENCHMARK_ID") or "bitgn/sandbox"
 AGENT_ENV = (os.getenv("AGENT_ENV") or "").strip().lower()
 CODEX_MODEL = os.getenv("CODEX_MODEL") or "gpt-5.3-codex"
+CODEX_PROFILE = (os.getenv("CODEX_PROFILE") or "").strip()
 BITGN_API_KEY = (os.getenv("BITGN_API_KEY") or "").strip()
 BITGN_RUN_NAME = (os.getenv("BITGN_RUN_NAME") or f"codex-sandbox {CODEX_MODEL}").strip()
 CODEX_TIMEOUT_SEC = int(os.getenv("CODEX_TIMEOUT_SEC") or 240)
@@ -1348,6 +1349,7 @@ def main() -> None:
         model=CODEX_MODEL,
         workdir=str(Path(__file__).resolve().parent),
         timeout_sec=CODEX_TIMEOUT_SEC,
+        profile=CODEX_PROFILE,
     )
     try:
         client = HarnessServiceClientSync(BITGN_URL)

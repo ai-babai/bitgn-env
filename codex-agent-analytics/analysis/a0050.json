@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-09T19:15:20.230133+00:00",
+  "local_run_id": "local_run_20260409T181900Z_64781",
+  "model": "gpt-5.3-codex",
+  "parallelism": 1,
+  "task_count": 1,
+  "rules_version": "rv0049",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t43",
+    "affected_tasks": [
+      "t43"
+    ],
+    "problem": "Task t43 fails with fail_group=one_short_token. The run computed the relative date correctly (`2026-03-01`) and confirmed zero matching captures, but still finalized with `OUTCOME_OK`. Scoring expected `OUTCOME_NONE_CLARIFICATION`, so the failure is an outcome-selection miss for a single-item lookup with no match.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t43",
+      "status": "fail",
+      "fail_group": "one_short_token",
+      "diagnosis": "The run computed the relative date correctly (`2026-03-01`) and confirmed zero matching captures, but still finalized with `OUTCOME_OK`. Scoring expected `OUTCOME_NONE_CLARIFICATION`, so the failure is an outcome-selection miss for a single-item lookup with no match.",
+      "focus": {
+        "primary_task_id": "t43",
+        "problem": "For a singular lookup request (\"Which one was it?\"), the agent returned a no-match statement under `OUTCOME_OK` instead of escalating to clarification when the filtered result set was empty.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t43"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Runtime/tooling behavior was sufficient (date math and repository lookup worked); the miss is a policy/harness decision on PAC outcome selection, not a code-path defect.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Zero-Match Clarification Gate For Singular Lookups",
+        "hypothesis": "When a user question semantically expects exactly one item (for example, \"which one\"/\"what was it\"), returning \"none found\" with `OUTCOME_OK` causes grading and interaction mismatches; a clarification outcome is more robust when candidate count is zero.",
+        "change": "Add a completion rule: for read-only lookup tasks that imply exactly one expected result, run a final cardinality check on the resolved candidate set. If count is 0, forbid `OUTCOME_OK` and return `OUTCOME_NONE_CLARIFICATION` with a minimal disambiguation question (for example, confirm anchor/date scope or alternative range). Keep `OUTCOME_OK` only when exactly one candidate is resolved.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0049/AGENTS.md",
+            "change_summary": "Add one focused bullet in the completion/outcome section defining an exact-one cardinality gate for singular lookup prompts and mandatory clarification on zero matches."
+          }
+        ],
+        "rollback": "Remove the added cardinality-gate bullet from `rules_versions/rv0049/AGENTS.md`.",
+        "simplicity": {
+          "max_files_changed": 2,
+          "max_lines_changed": 30,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "Rule is task-agnostic: it applies to any singular lookup workflow where resolved candidate cardinality is required to be exactly one."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0049/AGENTS.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0049/AGENTS.md",
+          "reason": "rules AGENTS path normalized to active rules version"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": " semantically expects exactly one item (for example, \\\"which one\\\"/\\\"what was it\\\"), returning \\\"none found\\\" with `OUTCOME_OK` causes grading and interaction mismatches; a clarification outcome is more robust when candidate count is zero.\",\n    \"change\": \"Add a completion rule: for read-only lookup tasks that imply exactly one expected result, run a final cardinality check on the resolved candidate set. If count is 0, forbid `OUTCOME_OK` and return `OUTCOME_NONE_CLARIFICATION` with a minimal disambiguation question (for example, confirm anchor/date scope or alternative range). Keep `OUTCOME_OK` only when exactly one candidate is resolved.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0049/AGENTS.md\",\n        \"change_summary\": \"Add one focused bullet in the completion/outcome section defining an exact-one cardinality gate for singular lookup prompts and mandatory clarification on zero matches.\"\n      }\n    ],\n    \"rollback\": \"Remove the added cardinality-gate bullet from `rules_versions/rv0049/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"Rule is task-agnostic: it applies to any singular lookup workflow where resolved candidate cardinality is required to be exactly one.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0049/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0049/AGENTS.md\",\n      \"reason\": \"Path is the active rules file and matches the whitelist for rules targets.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"proposal_code:null\",\n      \"final_path\": \"proposal_code:null\",\n      \"reason\": \"Code proposal was classified optional and intentionally omitted.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "s exactly one item (for example, \\\"which one\\\"/\\\"what was it\\\"), returning \\\"none found\\\" with `OUTCOME_OK` causes grading and interaction mismatches; a clarification outcome is more robust when candidate count is zero.\",\n    \"change\": \"Add a completion rule: for read-only lookup tasks that imply exactly one expected result, run a final cardinality check on the resolved candidate set. If count is 0, forbid `OUTCOME_OK` and return `OUTCOME_NONE_CLARIFICATION` with a minimal disambiguation question (for example, confirm anchor/date scope or alternative range). Keep `OUTCOME_OK` only when exactly one candidate is resolved.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0049/AGENTS.md\",\n        \"change_summary\": \"Add one focused bullet in the completion/outcome section defining an exact-one cardinality gate for singular lookup prompts and mandatory clarification on zero matches.\"\n      }\n    ],\n    \"rollback\": \"Remove the added cardinality-gate bullet from `rules_versions/rv0049/AGENTS.md`.\",\n    \"simplicity\": {\n      \"max_files_changed\": 2,\n      \"max_lines_changed\": 30,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"Rule is task-agnostic: it applies to any singular lookup workflow where resolved candidate cardinality is required to be exactly one.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0049/AGENTS.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0049/AGENTS.md\",\n      \"reason\": \"Path is the active rules file and matches the whitelist for rules targets.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"proposal_code:null\",\n      \"final_path\": \"proposal_code:null\",\n      \"reason\": \"Code proposal was classified optional and intentionally omitted.\"\n    }\n  ]\n}\ntokens used\n211\u00a0982\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T181900Z_64781/t43/attempt_20260409T181900Z_3a409e",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

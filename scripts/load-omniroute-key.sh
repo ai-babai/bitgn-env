@@ -26,3 +26,35 @@ bitgn_require_omniroute_key() {
 
   export OMNIROUTE_API_KEY
 }
+
+bitgn_prepare_codex_backend() {
+  local backend="${CODEX_BACKEND:-omniroute}"
+  backend="$(printf '%s' "$backend" | tr '[:upper:]' '[:lower:]')"
+
+  case "$backend" in
+    omniroute|spark)
+      ;;
+    *)
+      echo "ERROR: unsupported CODEX_BACKEND='$backend' (expected: omniroute|spark)" >&2
+      return 1
+      ;;
+  esac
+
+  CODEX_BACKEND="$backend"
+  export CODEX_BACKEND
+  export CODEX_PROFILE="${CODEX_PROFILE:-}"
+}
+
+bitgn_prepare_codex_auth() {
+  if ! bitgn_prepare_codex_backend; then
+    return 1
+  fi
+
+  if [[ "$CODEX_BACKEND" == "omniroute" ]]; then
+    bitgn_require_omniroute_key
+    return $?
+  fi
+
+  unset OMNIROUTE_API_KEY || true
+  return 0
+}

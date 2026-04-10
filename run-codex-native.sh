@@ -53,7 +53,7 @@ if [[ ${#TASKS[@]} -eq 0 ]]; then
   exit 1
 fi
 
-if ! bitgn_require_omniroute_key; then
+if ! bitgn_prepare_codex_auth; then
   exit 1
 fi
 
@@ -76,4 +76,4 @@ if [[ -n "$PARALLELISM" ]]; then
   RUN_ARGS+=("--parallelism" "$PARALLELISM")
 fi
 
-RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" uv run python runner.py "${RUN_ARGS[@]}"
+RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" CODEX_PROFILE="${CODEX_PROFILE:-}" CODEX_BACKEND="$CODEX_BACKEND" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" OMNIROUTE_API_KEY="${OMNIROUTE_API_KEY:-}" uv run python runner.py "${RUN_ARGS[@]}"

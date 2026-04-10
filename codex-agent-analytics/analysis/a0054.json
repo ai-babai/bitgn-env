@@ -1,0 +1,75 @@
+{
+  "ts": "2026-04-09T21:36:41.724181+00:00",
+  "local_run_id": "local_run_20260409T212311Z_89833",
+  "model": "gpt-5.3-codex",
+  "parallelism": 1,
+  "task_count": 1,
+  "rules_version": "rv0053",
+  "code_version": "c0001",
+  "focus": {
+    "primary_task_id": "t21",
+    "affected_tasks": [
+      "t21"
+    ],
+    "problem": "Task t21 fails with fail_group=mandatory_literal_conflict_not_escalated. The run read trusted docs that imposed conflicting exact-required literals for the same completion artifact, then still finalized with `OUTCOME_OK`. Score feedback expected `OUTCOME_NONE_CLARIFICATION`, so the failure is an outcome-selection miss under unresolved trusted-policy conflict. The current short-answer review path does not enforce conflict escalation early enough for read-only completions.",
+    "solution_type": "rules"
+  },
+  "tasks": [
+    {
+      "task_id": "t21",
+      "status": "fail",
+      "fail_group": "mandatory_literal_conflict_not_escalated",
+      "diagnosis": "The run read trusted docs that imposed conflicting exact-required literals for the same completion artifact, then still finalized with `OUTCOME_OK`. Score feedback expected `OUTCOME_NONE_CLARIFICATION`, so the failure is an outcome-selection miss under unresolved trusted-policy conflict. The current short-answer review path does not enforce conflict escalation early enough for read-only completions.",
+      "focus": {
+        "primary_task_id": "t21",
+        "problem": "Unresolved trusted mandatory-literal conflict can still pass through short-answer queue review and end as `OUTCOME_OK` instead of forced clarification.",
+        "solution_type": "rules",
+        "affected_tasks": [
+          "t21"
+        ]
+      },
+      "code_assessment": {
+        "classification": "optional",
+        "reason": "Evidence points to policy-application behavior (rule sequencing/priority in the short-answer review path), not a proven runtime/tooling defect. A harness-rule tightening is sufficient and lower risk.",
+        "rules_insufficient_evidence": ""
+      },
+      "proposal_rules": {
+        "title": "Force Pre-Outcome Mandatory-Literal Conflict Escalation In Short-Answer Reviews",
+        "hypothesis": "If the inbox short-answer profile requires a mandatory-literal conflict check before any `OUTCOME_OK` decision (including read-only paths), agents will consistently escalate unresolved trusted-policy conflicts to clarification.",
+        "change": "In the short-answer review include, add an explicit pre-outcome gate: after reading trusted mandatory docs, compute required artifact literals; if one artifact has multiple distinct literals without explicit precedence, stop immediately and return `OUTCOME_NONE_CLARIFICATION` (with conflicting trusted refs), even when no writes are planned.",
+        "target_files": [
+          {
+            "path": "codex-agent-analytics/rules_versions/rv0053/AGENTS.md",
+            "change_summary": "Add a concise pre-outcome conflict-check rule that runs before actionability classification finalization and before any `OUTCOME_OK`, covering read-only queue/review completions."
+          }
+        ],
+        "rollback": "Revert the added pre-outcome conflict-check lines in `includes/inbox-short-answer-review.md` for rv0053.",
+        "simplicity": {
+          "max_files_changed": 1,
+          "max_lines_changed": 20,
+          "single_hypothesis": true
+        },
+        "generalization_check": {
+          "passes": true,
+          "reason": "The rule is artifact-conflict based and workflow-agnostic; it does not depend on task-specific literals, ids, or file instances."
+        }
+      },
+      "proposal_code": null,
+      "rules_target_validation": [
+        {
+          "status": "normalized",
+          "original_path": "codex-agent-analytics/rules_versions/rv0053/includes/inbox-short-answer-review.md",
+          "final_path": "codex-agent-analytics/rules_versions/rv0053/AGENTS.md",
+          "reason": "invalid include path; normalized to active rules AGENTS"
+        }
+      ],
+      "code_target_validation": [],
+      "_codex_returncode": 0,
+      "_codex_stdout_tail": "hort-answer profile requires a mandatory-literal conflict check before any `OUTCOME_OK` decision (including read-only paths), agents will consistently escalate unresolved trusted-policy conflicts to clarification.\",\n    \"change\": \"In the short-answer review include, add an explicit pre-outcome gate: after reading trusted mandatory docs, compute required artifact literals; if one artifact has multiple distinct literals without explicit precedence, stop immediately and return `OUTCOME_NONE_CLARIFICATION` (with conflicting trusted refs), even when no writes are planned.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0053/includes/inbox-short-answer-review.md\",\n        \"change_summary\": \"Add a concise pre-outcome conflict-check rule that runs before actionability classification finalization and before any `OUTCOME_OK`, covering read-only queue/review completions.\"\n      }\n    ],\n    \"rollback\": \"Revert the added pre-outcome conflict-check lines in `includes/inbox-short-answer-review.md` for rv0053.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is artifact-conflict based and workflow-agnostic; it does not depend on task-specific literals, ids, or file instances.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0053/includes/inbox-short-answer-review.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0053/includes/inbox-short-answer-review.md\",\n      \"reason\": \"Active rules include path is whitelisted and requires no normalization.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"N/A\",\n      \"final_path\": \"N/A\",\n      \"reason\": \"Code classification is optional; no code proposal emitted.\"\n    }\n  ]\n}\n",
+      "_codex_stderr_tail": "requires a mandatory-literal conflict check before any `OUTCOME_OK` decision (including read-only paths), agents will consistently escalate unresolved trusted-policy conflicts to clarification.\",\n    \"change\": \"In the short-answer review include, add an explicit pre-outcome gate: after reading trusted mandatory docs, compute required artifact literals; if one artifact has multiple distinct literals without explicit precedence, stop immediately and return `OUTCOME_NONE_CLARIFICATION` (with conflicting trusted refs), even when no writes are planned.\",\n    \"target_files\": [\n      {\n        \"path\": \"codex-agent-analytics/rules_versions/rv0053/includes/inbox-short-answer-review.md\",\n        \"change_summary\": \"Add a concise pre-outcome conflict-check rule that runs before actionability classification finalization and before any `OUTCOME_OK`, covering read-only queue/review completions.\"\n      }\n    ],\n    \"rollback\": \"Revert the added pre-outcome conflict-check lines in `includes/inbox-short-answer-review.md` for rv0053.\",\n    \"simplicity\": {\n      \"max_files_changed\": 1,\n      \"max_lines_changed\": 20,\n      \"single_hypothesis\": true\n    },\n    \"generalization_check\": {\n      \"passes\": true,\n      \"reason\": \"The rule is artifact-conflict based and workflow-agnostic; it does not depend on task-specific literals, ids, or file instances.\"\n    }\n  },\n  \"proposal_code\": null,\n  \"rules_target_validation\": [\n    {\n      \"status\": \"valid\",\n      \"original_path\": \"codex-agent-analytics/rules_versions/rv0053/includes/inbox-short-answer-review.md\",\n      \"final_path\": \"codex-agent-analytics/rules_versions/rv0053/includes/inbox-short-answer-review.md\",\n      \"reason\": \"Active rules include path is whitelisted and requires no normalization.\"\n    }\n  ],\n  \"code_target_validation\": [\n    {\n      \"status\": \"not_applicable\",\n      \"original_path\": \"N/A\",\n      \"final_path\": \"N/A\",\n      \"reason\": \"Code classification is optional; no code proposal emitted.\"\n    }\n  ]\n}\ntokens used\n127\u00a0584\n",
+      "workspace": "/Users/skif/develop/bitgn-env/codex-agent-native/runs/local_run_20260409T212311Z_89833/t21/attempt_20260409T212311Z_c75fc1",
+      "score": 0.0,
+      "passed": false
+    }
+  ]
+}

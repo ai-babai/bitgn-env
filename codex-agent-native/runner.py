@@ -41,6 +41,8 @@ BITGN_URL = os.getenv("BENCHMARK_HOST") or "https://api.bitgn.com"
 BENCHMARK_ID = os.getenv("BENCHMARK_ID") or "bitgn/sandbox"
 AGENT_ENV = (os.getenv("AGENT_ENV") or "").strip().lower()
 CODEX_MODEL = os.getenv("CODEX_MODEL") or "gpt-5.3-codex"
+CODEX_PROFILE = (os.getenv("CODEX_PROFILE") or "").strip()
+CODEX_BACKEND = (os.getenv("CODEX_BACKEND") or "omniroute").strip().lower()
 BITGN_API_KEY = (os.getenv("BITGN_API_KEY") or "").strip()
 BITGN_RUN_NAME = (os.getenv("BITGN_RUN_NAME") or f"codex-native {CODEX_MODEL}").strip()
 NATIVE_SESSION_TIMEOUT_SEC = int(os.getenv("NATIVE_SESSION_TIMEOUT_SEC") or 420)
@@ -362,10 +364,16 @@ def _run_codex_session(
         str(out_path),
         "--model",
         CODEX_MODEL,
+    ]
+    if CODEX_PROFILE:
+        cmd.extend(["--profile", CODEX_PROFILE])
+    elif CODEX_BACKEND == "spark":
+        cmd.extend(["-c", "model_provider=openai"])
+    cmd.extend([
         "--cd",
         str(Path(__file__).resolve().parent),
         prompt,
-    ]
+    ])
 
     env_map = os.environ.copy()
     env_map["NATIVE_TASK_WORKSPACE"] = workspace_root
@@ -480,6 +488,8 @@ def _run_codex_session(
             "finished_at": finished_at.isoformat(),
             "duration_ms": duration_ms,
             "model": CODEX_MODEL,
+            "profile": CODEX_PROFILE,
+            "backend": CODEX_BACKEND,
             "env": env,
             "returncode": returncode,
             "usage": usage,

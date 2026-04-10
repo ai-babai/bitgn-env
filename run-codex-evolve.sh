@@ -48,8 +48,12 @@ else
   export AGENT_ENV="sandbox"
 fi
 
+if ! bitgn_prepare_codex_backend; then
+  exit 1
+fi
+
 if [[ "$MODE" == "solve" || "$MODE" == "full-step" || "$MODE" == "autopilot" ]]; then
-  if ! bitgn_require_omniroute_key; then
+  if ! bitgn_prepare_codex_auth; then
     exit 1
   fi
 fi
@@ -61,7 +65,7 @@ fi
 cd "$APP_DIR"
 
 if [[ -n "${OMNIROUTE_API_KEY:-}" ]]; then
-  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" uv run python evolve.py "$MODE" "$@"
+  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" OMNIROUTE_API_KEY="$OMNIROUTE_API_KEY" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" CODEX_PROFILE="${CODEX_PROFILE:-}" CODEX_BACKEND="${CODEX_BACKEND:-omniroute}" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" uv run python evolve.py "$MODE" "$@"
 else
-  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" uv run python evolve.py "$MODE" "$@"
+  RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" PYTHONPATH="$SCRIPT_DIR" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" CODEX_PROFILE="${CODEX_PROFILE:-}" CODEX_BACKEND="${CODEX_BACKEND:-omniroute}" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" OMNIROUTE_API_KEY="${OMNIROUTE_API_KEY:-}" uv run python evolve.py "$MODE" "$@"
 fi
