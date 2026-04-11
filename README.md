@@ -70,7 +70,10 @@ cd bitgn-env
 # single PAC1 task
 ./run-codex-native.sh --env pac1 t01
 
-# full PAC1 (current benchmark uses t01..t43)
+# full PAC1 (auto-resolve all tasks from benchmark)
+./run-codex-native.sh --env pac1 --all -p 5
+
+# full PAC1 (explicit task list)
 ./run-codex-native.sh --env pac1 -p 5 t{01..43}
 ```
 
@@ -105,7 +108,7 @@ BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[smoke]' \
 
 ```bash
 BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[xNNN]' \
-./run-codex-native.sh --env pac1 -p 5 t{01..43}
+./run-codex-native.sh --env pac1 --all -p 5
 ```
 
 See leaderboard standings and run comparisons at https://bitgn.com/challenge/PAC.

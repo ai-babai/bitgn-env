@@ -11,6 +11,7 @@ TIMEOUT_SEC="${CODEX_TIMEOUT_SEC:-240}"
 BITGN_API_KEY_FILE="${BITGN_API_KEY_FILE:-$HOME/.bitgn/bitgn-api-key}"
 ENV_ID="sandbox"
 PARALLELISM=""
+ALL_TASKS=0
 
 ARGS=("$@")
 TASKS=()
@@ -42,6 +43,9 @@ while [[ $i -lt ${#ARGS[@]} ]]; do
         i=$((i+1))
       fi
       ;;
+    --all)
+      ALL_TASKS=1
+      ;;
     --*)
       ;;
     *)
@@ -51,8 +55,13 @@ while [[ $i -lt ${#ARGS[@]} ]]; do
   i=$((i+1))
 done
 
-if [[ ${#TASKS[@]} -eq 0 ]]; then
-  echo "Usage: ./run-codex-native.sh [--env sandbox|pac1|pac1-prod] [-p|--parallelism N] <task-id> [task-id2 ...]" >&2
+if [[ $ALL_TASKS -eq 1 && ${#TASKS[@]} -gt 0 ]]; then
+  echo "ERROR: --all cannot be combined with explicit task ids" >&2
+  exit 1
+fi
+
+if [[ $ALL_TASKS -eq 0 && ${#TASKS[@]} -eq 0 ]]; then
+  echo "Usage: ./run-codex-native.sh [--env sandbox|pac1|pac1-prod] [--all] [-p|--parallelism N] <task-id> [task-id2 ...]" >&2
   exit 1
 fi
 
@@ -76,6 +85,41 @@ else
 fi
 
 cd "$APP_DIR"
+
+if [[ $ALL_TASKS -eq 1 ]]; then
+  if all_tasks_raw="$(BENCHMARK_ID="$BENCHMARK_ID" BENCHMARK_HOST="${BENCHMARK_HOST:-https://api.bitgn.com}" uv run python - <<'PY'
+import os
+
+from bitgn.harness_connect import HarnessServiceClientSync
+from bitgn.harness_pb2 import GetBenchmarkRequest
+
+benchmark_id = os.environ["BENCHMARK_ID"]
+benchmark_host = os.environ.get("BENCHMARK_HOST") or "https://api.bitgn.com"
+
+client = HarnessServiceClientSync(benchmark_host)
+benchmark = client.get_benchmark(GetBenchmarkRequest(benchmark_id=benchmark_id))
+print(" ".join(str(task.task_id) for task in benchmark.tasks))
+PY
+)"; then
+    read -r -a TASKS <<<"$all_tasks_raw"
+    if [[ ${#TASKS[@]} -eq 0 ]]; then
+      echo "ERROR: --all resolved zero tasks for benchmark '$BENCHMARK_ID'" >&2
+      exit 1
+    fi
+    echo "[TASKS] Resolved ${#TASKS[@]} tasks from $BENCHMARK_ID"
+  else
+    if [[ "$ENV_ID" == "pac1" ]]; then
+      echo "[TASKS] Failed to query benchmark tasks for $BENCHMARK_ID; using fallback t01..t43" >&2
+      TASKS=()
+      for n in {01..43}; do
+        TASKS+=("t$n")
+      done
+    else
+      echo "ERROR: --all failed to resolve tasks for benchmark '$BENCHMARK_ID'" >&2
+      exit 1
+    fi
+  fi
+fi
 
 RUN_ARGS=("${TASKS[@]}")
 if [[ -n "$PARALLELISM" ]]; then

@@ -108,12 +108,13 @@ cd /srv/aika-os/bitgn/code/bitgn-env
 
 ## Полный прогон PAC1 (native)
 
-- В native-обертке нет флага `--all`, поэтому полный прогон передается явным списком задач.
-- Текущий PAC1 benchmark: `t01..t40`.
+- В native-обертке есть флаг `--all`: задачи берутся напрямую из benchmark через `GetBenchmark`.
+- Для `--env pac1` предусмотрен fallback `t01..t43`, если API временно недоступен.
+- Для `--env pac1-prod` fallback не используется: нужен доступ к contest benchmark.
 
 ```bash
 cd /srv/aika-os/bitgn/code/bitgn-env
-BITGN_RUN_NAME='[@skifmax]-[codex]-[Chiki-Banboni]' ./run-codex-native.sh --env pac1 -p 2 t{01..40}
+BITGN_RUN_NAME='[@skifmax]-[codex]-[Chiki-Banboni]' ./run-codex-native.sh --env pac1 --all -p 2
 ```
 
 ## Снять контекст задачи без Codex

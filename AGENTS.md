@@ -27,6 +27,7 @@ Purpose: local workspace for BitGN challenge preparation.
   - `--env pac1` -> `bitgn/pac1-dev`
   - `--env pac1-prod` -> `bitgn/pac1-prod` (requires contest access)
 - Smoke rule: run without leaderboard (`BITGN_API_KEY=''` and `BITGN_API_KEY_FILE='/tmp/bitgn-no-key'`).
+- PROD note: `bitgn/pac1-prod` can be blind mode; do not judge run quality by local `passed/failed` alone.
 
 Examples:
 
@@ -37,5 +38,5 @@ cd /srv/aika-os/bitgn/code/bitgn-env
 BITGN_API_KEY='' BITGN_API_KEY_FILE='/tmp/bitgn-no-key' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1 t01
 
 # full dev leaderboard
-BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[high]-[xNNN]' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1 -p 9 t{01..43}
+BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[high]-[xNNN]' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1 --all -p 9
 ```

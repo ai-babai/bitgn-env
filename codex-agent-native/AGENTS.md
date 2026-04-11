@@ -26,6 +26,11 @@ Environment mapping in wrapper (`run-codex-native.sh`):
 - `--env pac1-prod` -> `BENCHMARK_ID=bitgn/pac1-prod`
 - `--env sandbox` -> `BENCHMARK_ID=bitgn/sandbox`
 
+Blind-mode reminder for PROD:
+
+- `bitgn/pac1-prod` may run in blind mode; local `passed/failed` and per-task `score` are not reliable quality signals.
+- For blind PROD runs, treat operational success as: tasks resolved, `LEADERBOARD_SUBMIT` present, and no runtime infra failures.
+
 Run-name convention for this workspace:
 
 - regular: `[@skifmax]-[codex]-[Chiki-Banboni]`
