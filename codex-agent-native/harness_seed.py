@@ -10,9 +10,11 @@ def local_rules_dir() -> Path:
 
 
 MAX_AGENTS_LINES = 100
+MAX_AGENTS_LINE_LENGTH = 320
 MAX_INCLUDE_FILES = 8
 MAX_INCLUDE_FILE_LINES = 80
 MAX_INCLUDE_TOTAL_LINES = 220
+MAX_INCLUDE_LINE_LENGTH = 320
 _INCLUDE_RE = re.compile(r"^\s*!include\s+([A-Za-z0-9_./-]+)\s*$")
 
 
@@ -118,6 +120,12 @@ def validate_local_harness() -> None:
     line_count = len(agents_text.splitlines())
     if line_count > MAX_AGENTS_LINES:
         raise ValueError(f"local-rules/AGENTS.md exceeds 100 lines: {line_count}")
+    for idx, line in enumerate(agents_text.splitlines(), start=1):
+        if len(line) > MAX_AGENTS_LINE_LENGTH:
+            raise ValueError(
+                "local-rules/AGENTS.md line exceeds "
+                f"{MAX_AGENTS_LINE_LENGTH} chars at line {idx}"
+            )
 
     include_paths = _extract_include_paths(agents_text)
     if len(include_paths) > MAX_INCLUDE_FILES:
@@ -133,6 +141,12 @@ def validate_local_harness() -> None:
             raise ValueError(
                 f"local-rules include file exceeds {MAX_INCLUDE_FILE_LINES} lines: {rel} ({include_lines})"
             )
+        for idx, line in enumerate(text.splitlines(), start=1):
+            if len(line) > MAX_INCLUDE_LINE_LENGTH:
+                raise ValueError(
+                    "local-rules include line exceeds "
+                    f"{MAX_INCLUDE_LINE_LENGTH} chars: {rel}:{idx}"
+                )
         total_lines += include_lines
         if total_lines > MAX_INCLUDE_TOTAL_LINES:
             raise ValueError(

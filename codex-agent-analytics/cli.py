@@ -87,9 +87,11 @@ CODE_TARGET_ALIASES = {
 
 RUNTIME_MAX_AGENTS_LINES = 100
 RUNTIME_SOFT_AGENTS_LINES = 95
+RUNTIME_MAX_AGENTS_LINE_LENGTH = 320
 RUNTIME_MAX_INCLUDE_FILES = 8
 RUNTIME_MAX_INCLUDE_FILE_LINES = 80
 RUNTIME_MAX_INCLUDE_TOTAL_LINES = 220
+RUNTIME_MAX_INCLUDE_LINE_LENGTH = 320
 _RULES_INCLUDE_RE = re.compile(r"^\s*!include\s+([A-Za-z0-9_./-]+)\s*$")
 
 
@@ -171,6 +173,12 @@ def _validate_runtime_rules_package(
         raise SystemExit(
             f"apply rejected: AGENTS.md exceeds {RUNTIME_MAX_AGENTS_LINES} lines ({agents_lines})"
         )
+    for idx, line in enumerate(agents_text.splitlines(), start=1):
+        if len(line) > RUNTIME_MAX_AGENTS_LINE_LENGTH:
+            raise SystemExit(
+                "apply rejected: AGENTS.md line exceeds "
+                f"{RUNTIME_MAX_AGENTS_LINE_LENGTH} chars (line {idx})"
+            )
 
     include_paths = _extract_rules_include_paths(agents_text)
     if len(include_paths) > RUNTIME_MAX_INCLUDE_FILES:
@@ -188,8 +196,16 @@ def _validate_runtime_rules_package(
             raise SystemExit(
                 f"apply rejected: include exceeds {RUNTIME_MAX_INCLUDE_FILE_LINES} lines ({rel}: {include_lines})"
             )
+        for idx, line in enumerate(content.splitlines(), start=1):
+            if len(line) > RUNTIME_MAX_INCLUDE_LINE_LENGTH:
+                raise SystemExit(
+                    "apply rejected: include line exceeds "
+                    f"{RUNTIME_MAX_INCLUDE_LINE_LENGTH} chars ({rel}:{idx})"
+                )
         if any(_RULES_INCLUDE_RE.match(line) for line in content.splitlines()):
-            raise SystemExit(f"apply rejected: nested include directive not allowed in {rel}")
+            raise SystemExit(
+                f"apply rejected: nested include directive not allowed in {rel}"
+            )
         total_include_lines += include_lines
 
     if total_include_lines > RUNTIME_MAX_INCLUDE_TOTAL_LINES:
@@ -259,8 +275,8 @@ def _normalize_text_payload(value: str) -> str:
     text = str(value)
     if "\\n" in text and "\n" not in text:
         text = text.replace("\\r\\n", "\n").replace("\\n", "\n")
-    if "\\\"" in text and '"' not in text:
-        text = text.replace('\\\"', '"')
+    if '\\"' in text and '"' not in text:
+        text = text.replace('\\"', '"')
     return text
 
 
@@ -641,8 +657,13 @@ def _normalize_rules_targets(
             else:
                 final_path = default_target
                 status = "normalized"
-                reason = "docs path outside harness map; normalized to active rules AGENTS"
-        elif candidate.startswith("codex-agent-analytics/docs/") or candidate == "codex-agent-analytics/ARCHITECTURE.md":
+                reason = (
+                    "docs path outside harness map; normalized to active rules AGENTS"
+                )
+        elif (
+            candidate.startswith("codex-agent-analytics/docs/")
+            or candidate == "codex-agent-analytics/ARCHITECTURE.md"
+        ):
             if _is_harness_structure_doc_target(candidate):
                 final_path = candidate
                 status = "accepted"
@@ -650,7 +671,9 @@ def _normalize_rules_targets(
             else:
                 final_path = default_target
                 status = "normalized"
-                reason = "docs path outside harness map; normalized to active rules AGENTS"
+                reason = (
+                    "docs path outside harness map; normalized to active rules AGENTS"
+                )
         elif candidate == default_target:
             final_path = candidate
             status = "accepted"
@@ -856,11 +879,13 @@ def _run_codex_analysis(task: RunTask, model: str) -> dict[str, Any]:
         cmd.extend(["--profile", CODEX_PROFILE])
     elif CODEX_BACKEND == "spark":
         cmd.extend(["-c", "model_provider=openai"])
-    cmd.extend([
-        "--cd",
-        str(ROOT),
-        prompt,
-    ])
+    cmd.extend(
+        [
+            "--cd",
+            str(ROOT),
+            prompt,
+        ]
+    )
 
     proc = subprocess.run(cmd, text=True, capture_output=True)
     text = ""
@@ -1422,11 +1447,13 @@ def run_apply(args: argparse.Namespace) -> None:
         cmd.extend(["--profile", CODEX_PROFILE])
     elif CODEX_BACKEND == "spark":
         cmd.extend(["-c", "model_provider=openai"])
-    cmd.extend([
-        "--cd",
-        str(ROOT),
-        prompt,
-    ])
+    cmd.extend(
+        [
+            "--cd",
+            str(ROOT),
+            prompt,
+        ]
+    )
     proc = subprocess.run(cmd, text=True, capture_output=True)
     updated_text = ""
     if out_path.exists():
@@ -1466,7 +1493,9 @@ def run_apply(args: argparse.Namespace) -> None:
     )
     changed_harness_docs_paths = sorted(
         key
-        for key in (set(before_selected_harness_docs.keys()) | set(after_harness_docs.keys()))
+        for key in (
+            set(before_selected_harness_docs.keys()) | set(after_harness_docs.keys())
+        )
         if before_selected_harness_docs.get(key, "") != after_harness_docs.get(key, "")
     )
 
@@ -1474,7 +1503,9 @@ def run_apply(args: argparse.Namespace) -> None:
     includes_total_lines = runtime_stats["includes_total_lines"]
     agents_line_count = runtime_stats["agents_lines"]
     harness_docs_count = len(after_harness_docs)
-    changed_limit = 220 if harness_docs_count > 0 else (100 if includes_count == 0 else 120)
+    changed_limit = (
+        220 if harness_docs_count > 0 else (100 if includes_count == 0 else 120)
+    )
     if changed_lines > changed_limit:
         raise SystemExit(f"apply rejected: changed lines too large ({changed_lines})")
     if len(changed_include_paths) > 1:
