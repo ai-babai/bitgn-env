@@ -2,10 +2,18 @@
 
 Workspace for BitGN runs with focus on the native Codex solver and analytics-driven evolution.
 
+English | [Русская версия](./README.ru.md)
+
 ## PAC leaderboard
 
 - Challenge page: https://bitgn.com/challenge/PAC
 - PAC is a benchmark where the agent executes inbox/ops workflows inside constrained task workspaces and is scored on exact outcome correctness, file mutations, and grounding references.
+
+## Quick links
+
+- Architecture: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+- Rules evolution policy: [`RULES_EVOLUTION_PRINCIPLES.md`](./RULES_EVOLUTION_PRINCIPLES.md)
+- Active local rules: [`codex-agent-native/local-rules/AGENTS.md`](./codex-agent-native/local-rules/AGENTS.md)
 
 ## How It Works (short)
 
