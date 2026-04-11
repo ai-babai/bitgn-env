@@ -19,3 +19,23 @@ Purpose: local workspace for BitGN challenge preparation.
 - Start from `sample-agents/README.md`.
 - For PAC runtime examples, check `sample-agents/pac1-py/`.
 - For local dry runs without API key, check `sample-agents/sandbox-py/`.
+
+## Native quick start
+
+- Native runner wrapper: `./run-codex-native.sh`.
+- Envs:
+  - `--env pac1` -> `bitgn/pac1-dev`
+  - `--env pac1-prod` -> `bitgn/pac1-prod` (requires contest access)
+- Smoke rule: run without leaderboard (`BITGN_API_KEY=''` and `BITGN_API_KEY_FILE='/tmp/bitgn-no-key'`).
+
+Examples:
+
+```bash
+cd /srv/aika-os/bitgn/code/bitgn-env
+
+# dev smoke single task
+BITGN_API_KEY='' BITGN_API_KEY_FILE='/tmp/bitgn-no-key' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1 t01
+
+# full dev leaderboard
+BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[high]-[xNNN]' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1 -p 9 t{01..43}
+```

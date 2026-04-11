@@ -20,6 +20,12 @@ Purpose: native runner for BitGN tasks (`sandbox` and `pac1`) with isolated task
 - Run name is controlled by `BITGN_RUN_NAME`.
 - If `BITGN_RUN_NAME` is empty, runner uses default `codex-native <CODEX_MODEL>`.
 
+Environment mapping in wrapper (`run-codex-native.sh`):
+
+- `--env pac1` -> `BENCHMARK_ID=bitgn/pac1-dev`
+- `--env pac1-prod` -> `BENCHMARK_ID=bitgn/pac1-prod`
+- `--env sandbox` -> `BENCHMARK_ID=bitgn/sandbox`
+
 Run-name convention for this workspace:
 
 - regular: `[@skifmax]-[codex]-[Chiki-Banboni]`
@@ -38,10 +44,13 @@ Quick command examples:
 cd /srv/aika-os/bitgn/code/bitgn-env
 
 # single PAC1 task
-BITGN_RUN_NAME='[@skifmax]-[codex]-[Chiki-Banboni]-[smoke]' ./run-codex-native.sh --env pac1 t01
+BITGN_API_KEY='' BITGN_API_KEY_FILE='/tmp/bitgn-no-key' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1 t01
 
 # full PAC1 set
-BITGN_RUN_NAME='[@skifmax]-[codex]-[Chiki-Banboni]' ./run-codex-native.sh --env pac1 -p 2 t{01..40}
+BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[high]-[xNNN]' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1 -p 9 t{01..43}
+
+# full PAC1 PROD set (when access is enabled)
+BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[prod]-[xNNN]' CODEX_BACKEND=omniroute CODEX_PROFILE='omni-codex-53-high' ./run-codex-native.sh --env pac1-prod -p 9 t{01..43}
 ```
 
 ## Notes discipline

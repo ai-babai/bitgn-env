@@ -21,6 +21,9 @@ while [[ $i -lt ${#ARGS[@]} ]]; do
     --env=pac1)
       ENV_ID="pac1"
       ;;
+    --env=pac1-prod)
+      ENV_ID="pac1-prod"
+      ;;
     --env=sandbox)
       ENV_ID="sandbox"
       ;;
@@ -49,7 +52,7 @@ while [[ $i -lt ${#ARGS[@]} ]]; do
 done
 
 if [[ ${#TASKS[@]} -eq 0 ]]; then
-  echo "Usage: ./run-codex-native.sh [--env sandbox|pac1] [-p|--parallelism N] <task-id> [task-id2 ...]" >&2
+  echo "Usage: ./run-codex-native.sh [--env sandbox|pac1|pac1-prod] [-p|--parallelism N] <task-id> [task-id2 ...]" >&2
   exit 1
 fi
 
@@ -61,7 +64,10 @@ if [[ -z "${BITGN_API_KEY:-}" && -f "$BITGN_API_KEY_FILE" ]]; then
   BITGN_API_KEY="$(tr -d '\r\n' < "$BITGN_API_KEY_FILE")"
 fi
 
-if [[ "$ENV_ID" == "pac1" ]]; then
+if [[ "$ENV_ID" == "pac1-prod" ]]; then
+  export BENCHMARK_ID="${BENCHMARK_ID:-bitgn/pac1-prod}"
+  export AGENT_ENV="pac1"
+elif [[ "$ENV_ID" == "pac1" ]]; then
   export BENCHMARK_ID="${BENCHMARK_ID:-bitgn/pac1-dev}"
   export AGENT_ENV="pac1"
 else

@@ -57,6 +57,13 @@ cd /srv/aika-os/bitgn/code/bitgn-env/codex-agent-native
 BENCHMARK_ID=bitgn/pac1-dev AGENT_ENV=pac1 uv run python runner.py t01
 ```
 
+Для PROD:
+
+```bash
+cd /srv/aika-os/bitgn/code/bitgn-env
+./run-codex-native.sh --env pac1-prod t01
+```
+
 ## Запуск нескольких задач в одном local run
 
 ```bash
@@ -147,7 +154,7 @@ uv run python snapshot_task_context.py t03 --env pac1
 - `BITGN_OMNIROUTE_KEY_FILE` (опционально: путь к key file, если не задан env)
 - `CODEX_MODEL` (по умолчанию `gpt-5.3-codex`)
 - `BENCHMARK_HOST` (по умолчанию `https://api.bitgn.com`)
-- `BENCHMARK_ID` (`bitgn/sandbox` или `bitgn/pac1-dev`)
+- `BENCHMARK_ID` (`bitgn/sandbox`, `bitgn/pac1-dev` или `bitgn/pac1-prod`)
 - `BITGN_API_KEY` (опционально: включает leaderboard run flow `start_run/start_trial/submit_run`)
 - `BITGN_RUN_NAME` (опционально: имя leaderboard run)
 - `AGENT_ENV` (`sandbox` или `pac1`)
