@@ -10,6 +10,11 @@
 - Полные task-артефакты сохраняются в `runs/...`
 - Правила разделены: `local-rules` (наши) и `bitgn-rules` (снимок runtime)
 
+Публичный ориентир:
+
+- Версия с `AGENTS.md <= 100` строк в день основного соревнования (blind-run) взяла 6-е место и `84/104` (84 балла): https://bitgn.com/l/pac1-prod
+- Текущая версия с default-лимитом `156` (`LOCAL_RULES_MAX_AGENTS_LINES`) закрывает `104/104`.
+
 ## Что такое "без wrapper-цикла"
 
 - Wrapper отвечает только за orchestration: `start_playground` -> запуск сессии -> `end_trial`.

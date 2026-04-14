@@ -9,6 +9,11 @@ English | [Русская версия](./README.ru.md)
 - Challenge page: https://bitgn.com/challenge/PAC
 - PAC is a benchmark where the agent executes inbox/ops workflows inside constrained task workspaces and is scored on exact outcome correctness, file mutations, and grounding references.
 
+Current public status:
+
+- Competition-day blind run baseline: <=100-line `AGENTS.md`, 6th place, `84/104` (84 points) on `pac1-prod`: https://bitgn.com/l/pac1-prod
+- Current stabilized setup: default 156-line cap (`LOCAL_RULES_MAX_AGENTS_LINES=156`) and `104/104` solved.
+
 ## Quick links
 
 - Architecture: [`ARCHITECTURE.md`](./ARCHITECTURE.md)

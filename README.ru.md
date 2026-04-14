@@ -9,6 +9,11 @@
 - Страница челленджа: https://bitgn.com/challenge/PAC
 - PAC — это benchmark, где агент выполняет inbox/ops workflow в ограниченных task-workspace и оценивается по точности outcome, мутациям файлов и grounding references.
 
+Текущий публичный статус:
+
+- Baseline в день основного соревнования (blind-run): `AGENTS.md <= 100` строк, 6-е место, `84/104` (84 балла) в `pac1-prod`: https://bitgn.com/l/pac1-prod
+- Текущая стабилизированная версия: default-лимит 156 строк (`LOCAL_RULES_MAX_AGENTS_LINES=156`) и `104/104` задач.
+
 ## Быстрые ссылки
 
 - Архитектура: [`ARCHITECTURE.ru.md`](./ARCHITECTURE.ru.md)
