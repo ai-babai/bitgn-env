@@ -28,6 +28,9 @@ Purpose: local workspace for BitGN challenge preparation.
   - `--env pac1-prod` -> `bitgn/pac1-prod` (requires contest access)
 - Smoke rule: run without leaderboard (`BITGN_API_KEY=''` and `BITGN_API_KEY_FILE='/tmp/bitgn-no-key'`).
 - PROD note: `bitgn/pac1-prod` can be blind mode; do not judge run quality by local `passed/failed` alone.
+- Native wrapper supports explicit custom task order and `--fail-fast` mode.
+- Historical baseline: <=100-line `AGENTS.md` policy reached rank #6 with `84/104` solved on `pac1-prod`: https://bitgn.com/l/pac1-prod
+- Current trajectory to `104/104` came from rule-level generalization + risk-first ordering + fail-fast validation loop.
 
 Examples:
 

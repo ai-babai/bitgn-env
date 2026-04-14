@@ -14,8 +14,8 @@ Restrictions:
 - Keep edits small and reversible.
 - Do not modify `codex-agent-native` runtime code.
 - Keep `AGENTS.md` concise (table-of-contents style), prefer include files for narrow details.
-- Runtime hard cap: `AGENTS.md` must remain <= 100 lines.
-- Soft budget: if `AGENTS.md` would exceed 95 lines, offload details into one include file or one harness doc in this cycle.
+- Runtime hard cap follows native runner config `LOCAL_RULES_MAX_AGENTS_LINES` (default `156`).
+- Soft budget: if `AGENTS.md` would exceed 145 lines, offload details into one include file or one harness doc in this cycle.
 - Create include files only when needed; avoid duplicate guidance between `AGENTS.md` and includes.
 - Touch at most one include file per apply cycle; one hypothesis per change.
 - Touch at most one harness doc file per apply cycle.

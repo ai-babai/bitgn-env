@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import re
 from typing import Any
 
@@ -9,7 +10,20 @@ def local_rules_dir() -> Path:
     return Path(__file__).resolve().parent / "local-rules"
 
 
-MAX_AGENTS_LINES = 100
+def _int_env(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"Invalid integer for {name}: {raw}") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be > 0, got {value}")
+    return value
+
+
+MAX_AGENTS_LINES = _int_env("LOCAL_RULES_MAX_AGENTS_LINES", 156)
 MAX_AGENTS_LINE_LENGTH = 320
 MAX_INCLUDE_FILES = 8
 MAX_INCLUDE_FILE_LINES = 80
@@ -119,7 +133,9 @@ def validate_local_harness() -> None:
     agents_text = agents.read_text(encoding="utf-8")
     line_count = len(agents_text.splitlines())
     if line_count > MAX_AGENTS_LINES:
-        raise ValueError(f"local-rules/AGENTS.md exceeds 100 lines: {line_count}")
+        raise ValueError(
+            f"local-rules/AGENTS.md exceeds {MAX_AGENTS_LINES} lines: {line_count}"
+        )
     for idx, line in enumerate(agents_text.splitlines(), start=1):
         if len(line) > MAX_AGENTS_LINE_LENGTH:
             raise ValueError(

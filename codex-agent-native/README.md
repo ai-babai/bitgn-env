@@ -10,6 +10,11 @@
 - Полные task-артефакты сохраняются в `runs/...`
 - Правила разделены: `local-rules` (наши) и `bitgn-rules` (снимок runtime)
 
+Публичный ориентир:
+
+- Версия с `AGENTS.md <= 100` строк в день основного соревнования (blind-run) взяла 6-е место и `84/104` (84 балла): https://bitgn.com/l/pac1-prod
+- Текущая версия с default-лимитом `156` (`LOCAL_RULES_MAX_AGENTS_LINES`) закрывает `104/104`.
+
 ## Что такое "без wrapper-цикла"
 
 - Wrapper отвечает только за orchestration: `start_playground` -> запуск сессии -> `end_trial`.
@@ -35,13 +40,23 @@
 ## Local rules / BitGN rules
 
 - Локальная папка: `codex-agent-native/local-rules/`
-- Обязательный файл: `codex-agent-native/local-rules/AGENTS.md` (не более 100 строк)
+- Обязательный файл: `codex-agent-native/local-rules/AGENTS.md`
+- Лимит строк для `AGENTS.md` конфигурируется через `LOCAL_RULES_MAX_AGENTS_LINES` (по умолчанию `156`)
 - Дополнительные правила: `codex-agent-native/local-rules/includes/*.md` через директивы `!include includes/<name>.md` в `AGENTS.md`
 - Включения не могут быть вложенными; используются только файлы внутри `includes/`
 - В runtime ничего не записываем для правил (BitGN не уведомляется об этом)
 - В системной инструкции Codex локальные правила вшиты как default context
 - Для визуальной проверки в run-артефактах пишется `initial_files/local-rules/`
 - Снимок BitGN policy-файлов пишется отдельно в `initial_files/bitgn-rules/`
+
+## Порядок задач и fail-fast
+
+- `run-codex-native.sh` поддерживает произвольный порядок задач: задачи исполняются в том порядке, в котором вы передали `task-id` в CLI.
+- Для полного прогона с кастомным порядком можно сначала сгенерировать список задач и передать его в wrapper одним аргументным списком.
+- Флаг `--fail-fast` поддерживается и в wrapper, и в `runner.py`:
+  - при `parallelism=1` прогон останавливается на первом фейле;
+  - при `parallelism>1` новые задачи больше не планируются после первого фейла, выполняются только уже запущенные inflight.
+- При fail-fast stop leaderboard submit пропускается (`LEADERBOARD_SUBMIT_SKIP`) — это защищает от отправки заведомо невалидного полного прогона.
 
 ## Запуск одной задачи
 
@@ -117,6 +132,14 @@ cd /srv/aika-os/bitgn/code/bitgn-env
 BITGN_RUN_NAME='[@skifmax]-[codex]-[Chiki-Banboni]' ./run-codex-native.sh --env pac1 --all -p 2
 ```
 
+## Исторический baseline и что дало 104/104
+
+- Базовое решение с `AGENTS.md <= 100` строк дало `84/104` и заняло 6-е место в `pac1-prod`: https://bitgn.com/l/pac1-prod
+- До `104/104` довели не за счет task-specific hardcode, а за счет операционного и policy-усиления:
+  - риск-кластер первым + произвольный порядок задач в full run;
+  - системный `--fail-fast` цикл (targeted smoke -> full smoke -> leaderboard);
+  - расширенные rule-level guardrails по frontmatter/outbox, inbox->outbox recipient resolution, finance selection, involvement precision и NORA queue consistency.
+
 ## Снять контекст задачи без Codex
 
 ```bash
@@ -161,5 +184,14 @@ uv run python snapshot_task_context.py t03 --env pac1
 - `AGENT_ENV` (`sandbox` или `pac1`)
 - `NATIVE_SESSION_TIMEOUT_SEC` (по умолчанию `420`)
 - `NATIVE_RUNS_DIR` (база для task workspaces)
+- `LOCAL_RULES_MAX_AGENTS_LINES` (лимит строк `local-rules/AGENTS.md`, по умолчанию `156`)
+
+## Контакты
+
+- Maksim Popkov
+- Telegram: `@skifmax`
+- Email: `contact.popkov@yandex.com`
+- Sites: https://mipopkov.com, https://mipopkov.ru
+- Dashboard preview: https://preview.mipopkov.com
 
 Рекомендация: хранить ключ в `$HOME/.codex/omniroute-api-key` с правами `600`.
