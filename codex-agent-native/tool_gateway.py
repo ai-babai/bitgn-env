@@ -1,8 +1,10 @@
 # pyright: reportMissingImports=false
 
 import json
+import os
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from bitgn.vm.mini_connect import MiniRuntimeClientSync
@@ -63,6 +65,44 @@ def _normalize_json_write_content(path: str, content: str) -> str:
         return content
 
 
+def _is_frontmatter_only_markdown(content: str) -> bool:
+    text = str(content or "").replace("\r\n", "\n")
+    if not text.startswith("---\n"):
+        return False
+    split_idx = text.find("\n---\n", 4)
+    if split_idx != -1:
+        body = text[split_idx + 5 :]
+        return body.strip() == ""
+    if text.endswith("\n---"):
+        return True
+    return False
+
+
+def _extract_markdown_body(content: str) -> str:
+    text = str(content or "").replace("\r\n", "\n")
+    if not text.startswith("---\n"):
+        return text
+    split_idx = text.find("\n---\n", 4)
+    if split_idx != -1:
+        return text[split_idx + 5 :]
+    if text.endswith("\n---"):
+        return ""
+    return text
+
+
+def _has_queue_markers(content: str) -> bool:
+    text = str(content or "")
+    return all(
+        marker in text
+        for marker in (
+            "bulk_processing_workflow",
+            "queue_batch_timestamp",
+            "queue_order_id",
+            "queue_target",
+        )
+    )
+
+
 class ToolGateway:
     def __init__(
         self, *, env: str, harness_url: str, workspace: TaskWorkspace, task_id: str
@@ -74,6 +114,11 @@ class ToolGateway:
             self.vm: Any = PcmRuntimeClientSync(harness_url)
         else:
             self.vm = MiniRuntimeClientSync(harness_url)
+        self.block_outbox_write = os.getenv(
+            "PAC1_BLOCK_OUTBOX_WRITE", ""
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        self._seen_outbox_writes: set[str] = set()
+        self._seen_queue_writes: set[str] = set()
 
     @staticmethod
     def from_workspace_context(workspace: TaskWorkspace) -> "ToolGateway":
@@ -230,8 +275,50 @@ class ToolGateway:
                 )
             )
         if tool == "write":
-            path = str(args.get("path", ""))
+            path_raw = str(args.get("path", ""))
+            path = path_raw.lstrip("/")
+            local_path = (self.workspace.root / path) if path else Path("")
+
+            if self.block_outbox_write and path.startswith("60_outbox/outbox/"):
+                return {}
+
+            if path.startswith("60_outbox/outbox/"):
+                if str(args.get("content", "")).strip() == "":
+                    return {}
+                if local_path.exists() and local_path.is_file():
+                    existing = local_path.read_text(encoding="utf-8")
+                    if existing.strip():
+                        return {}
+
+            if (
+                path.startswith("60_outbox/outbox/")
+                and path in self._seen_outbox_writes
+            ):
+                return {}
+
             content = _normalize_json_write_content(path, str(args.get("content", "")))
+
+            if (
+                path.endswith(".md")
+                and local_path.exists()
+                and local_path.is_file()
+                and _is_frontmatter_only_markdown(content)
+            ):
+                existing = local_path.read_text(encoding="utf-8")
+                if _extract_markdown_body(existing).strip():
+                    return {}
+
+            if (
+                path.endswith(".md")
+                and local_path.exists()
+                and local_path.is_file()
+                and local_path.read_text(encoding="utf-8") == content
+            ):
+                return {}
+
+            if _has_queue_markers(content) and path in self._seen_queue_writes:
+                return {}
+
             self.vm.write(
                 PcmWriteRequest(
                     path=path,
@@ -240,6 +327,10 @@ class ToolGateway:
                     end_line=int(args.get("end_line", 0) or 0),
                 )
             )
+            if path.startswith("60_outbox/outbox/"):
+                self._seen_outbox_writes.add(path)
+            if _has_queue_markers(content):
+                self._seen_queue_writes.add(path)
             return {}
         if tool == "delete":
             self.vm.delete(PcmDeleteRequest(path=str(args.get("path", ""))))
@@ -262,13 +353,17 @@ class ToolGateway:
             outcome = str(args.get("outcome", "OUTCOME_NONE_UNSUPPORTED"))
             if outcome not in OUTCOME_BY_NAME:
                 outcome = "OUTCOME_NONE_UNSUPPORTED"
-            self.vm.answer(
-                PcmAnswerRequest(
-                    message=str(args.get("message", args.get("answer", "WIP"))),
-                    outcome=OUTCOME_BY_NAME[outcome],
-                    refs=[str(r) for r in refs],
+            try:
+                self.vm.answer(
+                    PcmAnswerRequest(
+                        message=str(args.get("message", args.get("answer", "WIP"))),
+                        outcome=OUTCOME_BY_NAME[outcome],
+                        refs=[str(r) for r in refs],
+                    )
                 )
-            )
+            except Exception:
+                # Offline fallback: keep local run artifacts consistent even when VM is unreachable.
+                return {}
             return {}
         raise ValueError(f"Unknown pac1 tool: {tool}")
 

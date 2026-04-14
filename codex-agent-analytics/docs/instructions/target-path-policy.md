@@ -35,7 +35,7 @@ Atomicity guardrails:
 - one apply cycle should modify at most one include file
 - one apply cycle should modify at most one harness doc file
 - prefer AGENTS-only change unless include is required by line-budget or clarity
-- if AGENTS exceeds 95 lines, prefer include/harness offload over new AGENTS bullets
+- if AGENTS exceeds 145 lines (native default cap is 156), prefer include/harness offload over new AGENTS bullets
 - adding a new harness file requires explicit evidence in analyze report: repeated pattern (>=2 runs), expected generalization, and rollback note
 - if this evidence is weak, prefer updating existing files instead of adding new structure
 

@@ -103,11 +103,16 @@ If any regression appears, start a new focused iteration from that regression.
 
 Runtime/local-rules limits (enforced by native runner):
 
-- `local-rules/AGENTS.md` must be <= 100 lines.
+- `local-rules/AGENTS.md` line limit is configurable via `LOCAL_RULES_MAX_AGENTS_LINES` (default `156`; historical baseline was `100`).
 - include files must live under `includes/*.md`.
 - max include files: 8.
 - max lines per include file: 80.
 - max total include lines: 220.
+
+Operational run controls (native runner):
+
+- Arbitrary task order is supported: tasks are executed in the exact CLI order.
+- `--fail-fast` is supported: after first fail, new scheduling stops (inflight tasks complete when parallelism > 1).
 
 Analytics apply limits (enforced in `apply` flow):
 

@@ -19,12 +19,17 @@ English | [Русская версия](./README.ru.md)
 
 This setup is almost a meme - but it works:
 
-- `AGENTS.md` (<= 100 lines) - yes, a tiny Markdown file is the policy brain.
+- `AGENTS.md` policy brain - compact and operator-controlled (historical baseline used <=100 lines; current native default limit is 156).
 - Codex CLI - runs the actual task session.
 - Tool wrapper - exposes only the PAC-relevant tools to Codex.
 - Model: `gpt-5.3-codex` - current default solver.
 
 In short: `100-line policy file -> Codex session -> constrained tools -> scored result`.
+
+Historical baseline:
+
+- The original <=100-line `AGENTS.md` setup reached 6th place with `84/104` solved on `pac1-prod`: https://bitgn.com/l/pac1-prod
+- The current loop reached `104/104` by improving rule quality and run orchestration (not by task-specific answer hardcoding).
 
 ## Architecture (high level)
 
@@ -75,7 +80,15 @@ cd bitgn-env
 
 # full PAC1 (explicit task list)
 ./run-codex-native.sh --env pac1 -p 5 t{01..43}
+
+# full PAC1 with custom order + fail-fast
+./run-codex-native.sh --env pac1 --fail-fast -p 9 t03 t17 t28 t01 t02
 ```
+
+Notes:
+
+- Native runner executes tasks in the exact order passed in CLI.
+- `--fail-fast` stops scheduling after the first failed task (inflight tasks finish when parallelism > 1).
 
 ### Backend selection (Spark / OmniRoute)
 
@@ -151,6 +164,7 @@ Analytics artifacts:
   3. `$HOME/.codex/omniroute-api-key`
 - Native model override: `CODEX_MODEL` (default `gpt-5.3-codex`).
 - Native parallelism: `-p` / `--parallelism` or `NATIVE_PARALLELISM`.
+- Native local-rules line cap: `LOCAL_RULES_MAX_AGENTS_LINES` (default `156`).
 
 ## Related docs
 
@@ -159,6 +173,13 @@ Analytics artifacts:
 - Architecture deep dive: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
 - Rule design and evolution policy: [`RULES_EVOLUTION_PRINCIPLES.md`](./RULES_EVOLUTION_PRINCIPLES.md)
 - Active local rules: [`codex-agent-native/local-rules/AGENTS.md`](./codex-agent-native/local-rules/AGENTS.md)
-- BitGN runs dashboard: [`bitgn-dash`](https://github.com/ai-babai/bitgn-dash) — static matrix dashboard for native run pass/fail analysis
+- BitGN runs dashboard: https://preview.mipopkov.com
 - Provider reference: [`OmniRoute`](https://github.com/diegosouzapw/OmniRoute/) — commonly used backend provider for `CODEX_BACKEND=omniroute`
 - Root-level navigation/rules on this machine: [`AGENTS.md`](./AGENTS.md)
+
+## Contact
+
+- Maksim Popkov
+- Telegram: `@skifmax`
+- Email: `contact.popkov@yandex.com`
+- Sites: https://mipopkov.com, https://mipopkov.ru

@@ -103,11 +103,16 @@ Reference note:
 
 Ограничения runtime/local-rules (проверяются native runner):
 
-- `local-rules/AGENTS.md` должен быть <= 100 строк.
+- Лимит строк для `local-rules/AGENTS.md` конфигурируется через `LOCAL_RULES_MAX_AGENTS_LINES` (по умолчанию `156`; исторический baseline — `100`).
 - include-файлы должны находиться в `includes/*.md`.
 - максимум include-файлов: 8.
 - максимум строк на include-файл: 80.
 - максимум суммарных include-строк: 220.
+
+Операционные режимы native runner:
+
+- Поддерживается произвольный порядок задач: исполнение идет ровно в порядке task-id из CLI.
+- Поддерживается `--fail-fast`: после первого фейла планирование новых задач останавливается (при `parallelism > 1` inflight задачи дорабатываются).
 
 Ограничения analytics apply (проверяются в `apply` flow):
 

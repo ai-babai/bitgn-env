@@ -12,6 +12,7 @@ BITGN_API_KEY_FILE="${BITGN_API_KEY_FILE:-$HOME/.bitgn/bitgn-api-key}"
 ENV_ID="sandbox"
 PARALLELISM=""
 ALL_TASKS=0
+FAIL_FAST=0
 
 ARGS=("$@")
 TASKS=()
@@ -46,6 +47,9 @@ while [[ $i -lt ${#ARGS[@]} ]]; do
     --all)
       ALL_TASKS=1
       ;;
+    --fail-fast)
+      FAIL_FAST=1
+      ;;
     --*)
       ;;
     *)
@@ -61,7 +65,7 @@ if [[ $ALL_TASKS -eq 1 && ${#TASKS[@]} -gt 0 ]]; then
 fi
 
 if [[ $ALL_TASKS -eq 0 && ${#TASKS[@]} -eq 0 ]]; then
-  echo "Usage: ./run-codex-native.sh [--env sandbox|pac1|pac1-prod] [--all] [-p|--parallelism N] <task-id> [task-id2 ...]" >&2
+  echo "Usage: ./run-codex-native.sh [--env sandbox|pac1|pac1-prod] [--all] [--fail-fast] [-p|--parallelism N] <task-id> [task-id2 ...]" >&2
   exit 1
 fi
 
@@ -124,6 +128,9 @@ fi
 RUN_ARGS=("${TASKS[@]}")
 if [[ -n "$PARALLELISM" ]]; then
   RUN_ARGS+=("--parallelism" "$PARALLELISM")
+fi
+if [[ $FAIL_FAST -eq 1 ]]; then
+  RUN_ARGS+=("--fail-fast")
 fi
 
 RUNLOG_HOME="$RUNLOG_HOME_DEFAULT" CODEX_MODEL="$MODEL" CODEX_TIMEOUT_SEC="$TIMEOUT_SEC" CODEX_PROFILE="${CODEX_PROFILE:-}" CODEX_BACKEND="$CODEX_BACKEND" BITGN_API_KEY="${BITGN_API_KEY:-}" BITGN_RUN_NAME="${BITGN_RUN_NAME:-}" OMNIROUTE_API_KEY="${OMNIROUTE_API_KEY:-}" uv run python runner.py "${RUN_ARGS[@]}"

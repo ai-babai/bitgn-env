@@ -14,11 +14,18 @@ Purpose: native runner for BitGN tasks (`sandbox` and `pac1`) with isolated task
 - Local rules: `local-rules/AGENTS.md`
 - Run artifacts: `runs/<local_run_id>/<task_id>/attempt_*/`
 
+## Historical context
+
+- Original compact policy (`local-rules/AGENTS.md` <= 100 lines) reached rank #6 with `84/104` solved on `pac1-prod`: https://bitgn.com/l/pac1-prod
+- Current `104/104` stabilization was achieved via rule-level generalization + risk-first ordering + fail-fast validation cycles.
+
 ## Leaderboard run mode
 
 - Leaderboard mode is enabled only when `BITGN_API_KEY` is set (or provided by wrapper from `~/.bitgn/bitgn-api-key`).
 - Run name is controlled by `BITGN_RUN_NAME`.
 - If `BITGN_RUN_NAME` is empty, runner uses default `codex-native <CODEX_MODEL>`.
+- Task execution order is exactly the order of task IDs passed to `run-codex-native.sh` / `runner.py`.
+- `--fail-fast` is supported and should be used for risk-first gating before full leaderboard submit.
 
 Environment mapping in wrapper (`run-codex-native.sh`):
 

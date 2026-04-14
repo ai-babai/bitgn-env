@@ -121,9 +121,7 @@ def _prepare_leaderboard_trials(
 def _start_run_via_connect_json(
     *, benchmark_id: str, name: str, api_key: str
 ) -> tuple[str, list[str]]:
-    endpoint = (
-        f"{BITGN_URL.rstrip('/')}/bitgn.harness.HarnessService/StartRun"
-    )
+    endpoint = f"{BITGN_URL.rstrip('/')}/bitgn.harness.HarnessService/StartRun"
     payload = {
         "benchmarkId": benchmark_id,
         "name": name,
@@ -142,9 +140,7 @@ def _start_run_via_connect_json(
         with urlrequest.urlopen(req, timeout=30) as resp:
             body = resp.read().decode("utf-8")
     except urlerror.HTTPError as exc:
-        raise RuntimeError(
-            f"StartRun fallback failed: HTTP {exc.code}"
-        ) from exc
+        raise RuntimeError(f"StartRun fallback failed: HTTP {exc.code}") from exc
     data = json.loads(body)
     run_id = str(data.get("runId", "")).strip()
     trial_ids = [str(x).strip() for x in data.get("trialIds", []) if str(x).strip()]
@@ -271,7 +267,7 @@ def _append_run_manifest(
             fh.write(line)
 
 
-def _parse_cli(argv: list[str]) -> tuple[list[str], int]:
+def _parse_cli(argv: list[str]) -> tuple[list[str], int, bool]:
     parser = ArgumentParser(description="Run codex-native on selected tasks")
     parser.add_argument("tasks", nargs="+", help="Task ids (space or comma separated)")
     parser.add_argument(
@@ -281,8 +277,17 @@ def _parse_cli(argv: list[str]) -> tuple[list[str], int]:
         default=NATIVE_PARALLELISM,
         help="Task parallelism (default: 2)",
     )
+    parser.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help="Stop scheduling new tasks after first failure",
+    )
     ns = parser.parse_args(argv)
-    return _resolve_tasks(list(ns.tasks)), max(1, int(ns.parallelism or 1))
+    return (
+        _resolve_tasks(list(ns.tasks)),
+        max(1, int(ns.parallelism or 1)),
+        bool(ns.fail_fast),
+    )
 
 
 def detect_env() -> str:
@@ -369,11 +374,13 @@ def _run_codex_session(
         cmd.extend(["--profile", CODEX_PROFILE])
     elif CODEX_BACKEND == "spark":
         cmd.extend(["-c", "model_provider=openai"])
-    cmd.extend([
-        "--cd",
-        str(Path(__file__).resolve().parent),
-        prompt,
-    ])
+    cmd.extend(
+        [
+            "--cd",
+            str(Path(__file__).resolve().parent),
+            prompt,
+        ]
+    )
 
     env_map = os.environ.copy()
     env_map["NATIVE_TASK_WORKSPACE"] = workspace_root
@@ -930,7 +937,7 @@ def _run_single_task(
 
 
 def main() -> None:
-    task_filter, parallelism = _parse_cli(sys.argv[1:])
+    task_filter, parallelism, fail_fast = _parse_cli(sys.argv[1:])
     env = detect_env()
     harness_seed.validate_local_harness()
 
@@ -958,26 +965,37 @@ def main() -> None:
     local_run_id = _resolve_local_run_id()
     _stage(
         "LOCAL_RUN_START",
-        f"local_run_id={local_run_id} tasks={task_filter} parallelism={parallelism}",
+        f"local_run_id={local_run_id} tasks={task_filter} parallelism={parallelism} fail_fast={fail_fast}",
     )
 
     results: list[dict[str, Any]] = []
+    fail_fast_stop = False
+    stop_task_id = ""
     if parallelism <= 1 or len(task_filter) <= 1:
         for task_id in task_filter:
-            results.append(
-                _run_single_task(
-                    env=env,
-                    task_id=task_id,
-                    local_run_id=local_run_id,
-                    trial_seed=leaderboard_trials.get(task_id),
-                    leaderboard_run_id=leaderboard_run_id,
-                )
+            result = _run_single_task(
+                env=env,
+                task_id=task_id,
+                local_run_id=local_run_id,
+                trial_seed=leaderboard_trials.get(task_id),
+                leaderboard_run_id=leaderboard_run_id,
             )
+            results.append(result)
+            if fail_fast and not bool(result.get("ok", False)):
+                fail_fast_stop = True
+                stop_task_id = task_id
+                break
     else:
         max_workers = min(parallelism, len(task_filter))
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            futures = [
-                pool.submit(
+            pending_task_ids = list(task_filter)
+            inflight: dict[Any, str] = {}
+
+            def _submit_next() -> bool:
+                if not pending_task_ids:
+                    return False
+                task_id = pending_task_ids.pop(0)
+                fut = pool.submit(
                     _run_single_task,
                     env=env,
                     task_id=task_id,
@@ -985,24 +1003,51 @@ def main() -> None:
                     trial_seed=leaderboard_trials.get(task_id),
                     leaderboard_run_id=leaderboard_run_id,
                 )
-                for task_id in task_filter
-            ]
-            for fut in as_completed(futures):
-                results.append(fut.result())
+                inflight[fut] = task_id
+                return True
+
+            for _ in range(max_workers):
+                if not _submit_next():
+                    break
+
+            while inflight:
+                fut = next(as_completed(list(inflight.keys())))
+                task_id = inflight.pop(fut)
+                result = fut.result()
+                results.append(result)
+
+                if fail_fast and not bool(result.get("ok", False)):
+                    fail_fast_stop = True
+                    stop_task_id = task_id
+
+                if not fail_fast_stop:
+                    _submit_next()
 
     if leaderboard_run_id:
-        try:
-            submit_client = HarnessServiceClientSync(BITGN_URL)
-            submit_client.submit_run(
-                SubmitRunRequest(run_id=leaderboard_run_id, force=True)
+        if fail_fast and fail_fast_stop:
+            _stage(
+                "LEADERBOARD_SUBMIT_SKIP",
+                f"run_id={leaderboard_run_id} reason=fail_fast_stop task={stop_task_id}",
             )
-            _stage("LEADERBOARD_SUBMIT", f"run_id={leaderboard_run_id}")
-        except ConnectError as exc:
-            _cli(
-                f"[LEADERBOARD] Submit failed for run {leaderboard_run_id}: "
-                f"{exc.code} {exc.message}"
-            )
-            raise SystemExit(2) from exc
+        else:
+            try:
+                submit_client = HarnessServiceClientSync(BITGN_URL)
+                submit_client.submit_run(
+                    SubmitRunRequest(run_id=leaderboard_run_id, force=True)
+                )
+                _stage("LEADERBOARD_SUBMIT", f"run_id={leaderboard_run_id}")
+            except ConnectError as exc:
+                _cli(
+                    f"[LEADERBOARD] Submit failed for run {leaderboard_run_id}: "
+                    f"{exc.code} {exc.message}"
+                )
+                raise SystemExit(2) from exc
+
+    if fail_fast and fail_fast_stop:
+        _stage(
+            "FAIL_FAST_STOP",
+            f"local_run_id={local_run_id} stop_task={stop_task_id} completed={len(results)} planned={len(task_filter)}",
+        )
 
     total = len(results)
     passed = sum(1 for r in results if bool(r.get("passed", False)))
