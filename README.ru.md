@@ -186,3 +186,4 @@ BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[xNNN]' \
 - Telegram: `@skifmax`
 - Email: `contact.popkov@yandex.com`
 - Сайты: https://mipopkov.com, https://mipopkov.ru
+- LinkedIn: https://www.linkedin.com/in/maksim-popkov/

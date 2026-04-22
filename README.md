@@ -189,3 +189,4 @@ Analytics artifacts:
 - Telegram: `@skifmax`
 - Email: `contact.popkov@yandex.com`
 - Sites: https://mipopkov.com, https://mipopkov.ru
+- LinkedIn: https://www.linkedin.com/in/maksim-popkov/
