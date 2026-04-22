@@ -175,7 +175,8 @@ BITGN_RUN_NAME='[@skifmax]-[codex]-[chiki-banboni]-[xNNN]' \
 - Architecture deep dive: [`ARCHITECTURE.ru.md`](./ARCHITECTURE.ru.md)
 - Rule design and evolution policy: [`RULES_EVOLUTION_PRINCIPLES.ru.md`](./RULES_EVOLUTION_PRINCIPLES.ru.md)
 - Active local rules: [`codex-agent-native/local-rules/AGENTS.md`](./codex-agent-native/local-rules/AGENTS.md)
-- BitGN runs dashboard: https://preview.mipopkov.com
+- BitGN runs dashboard (preview): https://preview.mipopkov.com/bitgn-dash/
+- BitGN dashboard repo: https://github.com/ai-babai/bitgn-dash
 - Provider reference: [`OmniRoute`](https://github.com/diegosouzapw/OmniRoute/) — часто используемый backend provider для `CODEX_BACKEND=omniroute`
 - Root-level navigation/rules on this machine: [`AGENTS.md`](./AGENTS.md)
 

@@ -178,7 +178,8 @@ Analytics artifacts:
 - Architecture deep dive: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
 - Rule design and evolution policy: [`RULES_EVOLUTION_PRINCIPLES.md`](./RULES_EVOLUTION_PRINCIPLES.md)
 - Active local rules: [`codex-agent-native/local-rules/AGENTS.md`](./codex-agent-native/local-rules/AGENTS.md)
-- BitGN runs dashboard: https://preview.mipopkov.com
+- BitGN runs dashboard (preview): https://preview.mipopkov.com/bitgn-dash/
+- BitGN dashboard repo: https://github.com/ai-babai/bitgn-dash
 - Provider reference: [`OmniRoute`](https://github.com/diegosouzapw/OmniRoute/) — commonly used backend provider for `CODEX_BACKEND=omniroute`
 - Root-level navigation/rules on this machine: [`AGENTS.md`](./AGENTS.md)
 
