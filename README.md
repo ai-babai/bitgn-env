@@ -2,7 +2,7 @@
 
 Workspace for BitGN runs with focus on the native Codex solver and analytics-driven evolution.
 
-English | [Русская версия](./README.ru.md)
+English | [Versión en español](./README.es-ES.md) | [Русская версия](./README.ru.md)
 
 ## PAC leaderboard
 

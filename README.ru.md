@@ -2,7 +2,7 @@
 
 Рабочее пространство для запусков BitGN с фокусом на native Codex solver и эволюцию правил через analytics.
 
-[English version](./README.md) | Русская версия
+[English version](./README.md) | [Versión en español](./README.es-ES.md) | Русская версия
 
 ## PAC leaderboard
 
